@@ -1,0 +1,3219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Reid's Golf</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --gold: #C9A84C;
+      --gold-dim: #7a6230;
+      --gold-pale: rgba(201, 168, 76, 0.12);
+      --gd: #0e1a0e;
+      --gc: #192419;
+      --gr: #1f2e1f;
+      --gb: rgba(201, 168, 76, 0.18);
+      --cream: #ede8d8;
+      --cd: #9a9282;
+      --red: #c0392b;
+      --ok: #4caf7d;
+      --warn: #e07b30;
+      --ts: #FFD700;
+      --ta: #50C878;
+      --tb: #2E8B57;
+      --tc: #d8d8d0;
+      --td: #e8a030;
+      --te: #888;
+      --tf: #c0392b;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--gd);
+      color: var(--cream);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(170deg, transparent, transparent 60px, rgba(255, 255, 255, 0.012) 60px, rgba(255, 255, 255, 0.012) 120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 16px;
+      position: relative;
+      z-index: 1;
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    header {
+      padding: 24px 0 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .hl h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .hl .sub {
+      font-size: 10px;
+      letter-spacing: .16em;
+      color: var(--cd);
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    .hr {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .hlink {
+      font-size: 10px;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: .08em;
+      border-bottom: 1px solid var(--gold-dim);
+      padding-bottom: 1px;
+      white-space: nowrap;
+    }
+
+    /* Tab bar */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin-bottom: 20px;
+      background: var(--gc);
+      border: 1px solid var(--gb);
+      border-radius: 10px;
+      padding: 4px;
+      position: sticky;
+      top: 8px;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    .tab {
+      padding: 11px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--cd);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: .06em;
+      cursor: pointer;
+      transition: all .2s;
+      text-align: center;
+    }
+
+    .tab.active {
+      background: var(--gold);
+      color: var(--gd);
+      font-weight: 500;
+    }
+
+    /* Pages */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ══════════════════════════════
+   RANKINGS PAGE
+══════════════════════════════ */
+    .rankings-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .rankings-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .refresh-btn {
+      padding: 6px 12px;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-dim);
+      border-radius: 5px;
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(201, 168, 76, .22);
+    }
+
+    .load-msg {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--cd);
+      font-size: 12px;
+    }
+
+    .load-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--gold-dim);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Tier group */
+    .tier-group {
+      margin-bottom: 10px;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid var(--gb);
+    }
+
+    .tier-group-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity .15s;
+    }
+
+    .tier-group-header:hover {
+      opacity: .85;
+    }
+
+    .tier-badge {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 900;
+      width: 28px;
+      text-align: center;
+    }
+
+    .tier-group-label {
+      font-size: 11px;
+      letter-spacing: .08em;
+      color: inherit;
+      opacity: .75;
+      flex: 1;
+    }
+
+    .tier-count {
+      font-size: 10px;
+      opacity: .6;
+    }
+
+    .tier-chevron {
+      font-size: 11px;
+      transition: transform .25s;
+      opacity: .7;
+    }
+
+    .tier-group.collapsed .tier-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .tier-courses {
+      display: block;
+    }
+
+    .tier-group.collapsed .tier-courses {
+      display: none;
+    }
+
+    /* Course row */
+    .course-row {
+      background: rgba(0, 0, 0, .15);
+      border-top: 1px solid rgba(0, 0, 0, .2);
+    }
+
+    .course-row-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .course-row-header:hover {
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .course-rank {
+      font-size: 11px;
+      color: var(--cd);
+      width: 24px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .course-name {
+      font-size: 13px;
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .course-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .course-record {
+      font-size: 11px;
+      color: var(--cd);
+    }
+
+    .course-rounds {
+      font-size: 10px;
+      color: var(--cd);
+      opacity: .7;
+    }
+
+    .course-chevron {
+      font-size: 10px;
+      color: var(--cd);
+      transition: transform .2s;
+      opacity: .5;
+    }
+
+    .course-row.open .course-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Course detail */
+    .course-detail {
+      display: none;
+      padding: 12px 14px 14px;
+      background: rgba(0, 0, 0, .25);
+      border-top: 1px solid rgba(0, 0, 0, .15);
+    }
+
+    .course-row.open .course-detail {
+      display: block;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .detail-item {
+      background: rgba(255, 255, 255, .04);
+      border-radius: 5px;
+      padding: 8px 10px;
+    }
+
+    .detail-label {
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--cd);
+      margin-bottom: 3px;
+    }
+
+    .detail-val {
+      font-size: 13px;
+      color: var(--cream);
+    }
+
+    .detail-val.gold {
+      color: var(--gold);
+    }
+
+    .detail-val.ok {
+      color: var(--ok);
+    }
+
+    .rounds-log {
+      margin-bottom: 12px;
+    }
+
+    .rounds-log-title {
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--cd);
+      margin-bottom: 6px;
+    }
+
+    .round-entry {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      font-size: 11px;
+    }
+
+    .round-entry:last-child {
+      border-bottom: none;
+    }
+
+    .round-date {
+      color: var(--cd);
+      width: 90px;
+      flex-shrink: 0;
+    }
+
+    .round-score {
+      color: var(--cream);
+      width: 60px;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+
+    .round-partners {
+      color: var(--cd);
+      font-size: 10px;
+      flex: 1;
+      font-style: italic;
+    }
+
+    .detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+
+    .dtag {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+    }
+
+    .dtag.ok {
+      background: rgba(76, 175, 125, .15);
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    .log-round-btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--gold);
+      color: var(--gd);
+      border: none;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .log-round-btn:hover {
+      opacity: .88;
+    }
+
+    /* ══════════════════════════════
+   LOG A ROUND PAGE
+══════════════════════════════ */
+    .card {
+      background: var(--gc);
+      border: 1px solid var(--gb);
+      border-radius: 10px;
+      margin-bottom: 11px;
+      overflow: hidden;
+    }
+
+    .ch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      cursor: pointer;
+      background: var(--gr);
+      user-select: none;
+    }
+
+    .ct {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .cv {
+      color: var(--gold-dim);
+      font-size: 11px;
+      transition: transform .25s;
+    }
+
+    .card.open .cv {
+      transform: rotate(180deg);
+    }
+
+    .cb {
+      padding: 15px;
+      display: none;
+    }
+
+    .card.open .cb {
+      display: block;
+    }
+
+    /* Search */
+    .sw {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .si {
+      width: 100%;
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 6px;
+      color: var(--cream);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      padding: 11px 38px 11px 13px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .si:focus {
+      border-color: var(--gold);
+    }
+
+    .sicon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--cd);
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .sr {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--gr);
+      border: 1px solid var(--gb);
+      border-radius: 6px;
+      z-index: 100;
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    }
+
+    .sri {
+      padding: 10px 13px;
+      font-size: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      transition: background .1s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .sri:hover {
+      background: var(--gold-pale);
+    }
+
+    .sri .rn {
+      color: var(--cream);
+      flex: 1;
+    }
+
+    .sri .rm {
+      color: var(--cd);
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .sri-group {
+      padding: 5px 13px;
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--cd);
+      background: rgba(0, 0, 0, .2);
+    }
+
+    .ss {
+      font-size: 11px;
+      color: var(--gold);
+      margin-bottom: 8px;
+      min-height: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .spin {
+      width: 11px;
+      height: 11px;
+      border: 2px solid var(--gold-dim);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+
+    /* New course checkbox */
+    .new-course-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 13px;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-dim);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .new-course-check label {
+      font-size: 12px;
+      color: var(--gold);
+      cursor: pointer;
+      letter-spacing: .04em;
+      flex: 1;
+    }
+
+    .new-course-check input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--gold);
+    }
+
+    /* Fill panel */
+    .fill-panel {
+      background: var(--gd);
+      border: 1px solid var(--ok);
+      border-radius: 6px;
+      padding: 11px 13px;
+      margin-bottom: 10px;
+      display: none;
+    }
+
+    .fill-panel-title {
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ok);
+      margin-bottom: 8px;
+    }
+
+    .fill-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .fill-item {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .fi-label {
+      color: var(--cd);
+    }
+
+    .fi-val {
+      color: var(--cream);
+    }
+
+    .fi-empty {
+      color: var(--cd);
+      font-style: italic;
+    }
+
+    .fill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .fill-dot.high {
+      background: var(--ok);
+    }
+
+    .fill-dot.medium {
+      background: var(--warn);
+    }
+
+    .fill-dot.low {
+      background: var(--red);
+    }
+
+    .fill-dot.na {
+      background: var(--cd);
+    }
+
+    .ch-hi {
+      border-left: 2px solid var(--ok) !important;
+    }
+
+    .ch-me {
+      border-left: 2px solid var(--warn) !important;
+    }
+
+    .ch-lo {
+      border-left: 2px solid var(--red) !important;
+    }
+
+    /* Fields */
+    .f {
+      margin-bottom: 12px;
+    }
+
+    .f label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--cd);
+      margin-bottom: 4px;
+    }
+
+    .f label .ref {
+      color: var(--gold);
+      font-size: 9px;
+      font-weight: normal;
+      letter-spacing: 0;
+      text-transform: none;
+      margin-left: auto;
+    }
+
+    input[type=text],
+    input[type=number],
+    input[type=date],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 5px;
+      color: var(--cream);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 8px 11px;
+      outline: none;
+      transition: border-color .15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--gold);
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23C9A84C' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 11px center;
+      padding-right: 30px;
+    }
+
+    select option {
+      background: var(--gc);
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .r2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .r3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+    }
+
+    /* New course extra fields */
+    .new-course-fields {
+      display: none;
+    }
+
+    .new-course-fields.vis {
+      display: block;
+    }
+
+    /* Tier */
+    .tier-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 9px;
+    }
+
+    .tp {
+      padding: 7px 14px;
+      border-radius: 5px;
+      border: 1px solid var(--gb);
+      background: var(--gd);
+      color: var(--cd);
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .tp:hover {
+      border-color: var(--gold-dim);
+      color: var(--cream);
+    }
+
+    .tp.sel-S {
+      background: #FFD700;
+      border-color: #FFD700;
+      color: #000;
+    }
+
+    .tp.sel-A {
+      background: #50C878;
+      border-color: #50C878;
+      color: #000;
+    }
+
+    .tp.sel-B {
+      background: #2E8B57;
+      border-color: #2E8B57;
+      color: #fff;
+    }
+
+    .tp.sel-C {
+      background: #d0d0c8;
+      border-color: #aaa;
+      color: #222;
+    }
+
+    .tp.sel-D {
+      background: #e8a030;
+      border-color: #e8a030;
+      color: #000;
+    }
+
+    .tp.sel-E {
+      background: #888;
+      border-color: #666;
+      color: #fff;
+    }
+
+    .tp.sel-F {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: #fff;
+    }
+
+    .tier-sub {
+      margin-top: 7px;
+      display: none;
+    }
+
+    .tier-sub.vis {
+      display: block;
+    }
+
+    /* Tee groups */
+    .tg {
+      margin-bottom: 13px;
+    }
+
+    .tgh {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 7px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--gb);
+    }
+
+    .td-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .tgl {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cd);
+      flex: 1;
+    }
+
+    .ton {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--gb);
+      color: var(--cd);
+      padding: 2px 3px;
+      outline: none;
+      width: 130px;
+    }
+
+    .ton:focus {
+      border-bottom-color: var(--gold);
+    }
+
+    /* Record live */
+    .rl {
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 5px;
+      padding: 8px 11px;
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--cd);
+      min-height: 40px;
+      transition: color .2s;
+    }
+
+    .rl.under {
+      color: var(--ok);
+    }
+
+    .rl.even {
+      color: var(--gold);
+    }
+
+    .rl.over {
+      color: var(--cream);
+    }
+
+    /* Stars */
+    .star-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .star {
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--gb);
+      transition: color .15s;
+      user-select: none;
+    }
+
+    .star.on {
+      color: var(--gold);
+    }
+
+    .star-label {
+      font-size: 11px;
+      color: var(--cd);
+      margin-left: 4px;
+    }
+
+    /* Toggles */
+    .tgg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tog {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+    }
+
+    .tog input {
+      display: none;
+    }
+
+    .tt {
+      width: 37px;
+      height: 20px;
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 10px;
+      position: relative;
+      transition: background .2s;
+      flex-shrink: 0;
+    }
+
+    .tt::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: var(--cd);
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: all .2s;
+    }
+
+    .tog input:checked+.tt {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .tog input:checked+.tt::after {
+      left: 19px;
+      background: #000;
+    }
+
+    .tl {
+      font-size: 11px;
+      color: var(--cd);
+    }
+
+    /* Partners */
+    .partner-wrap {
+      position: relative;
+    }
+
+    .partner-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      min-height: 32px;
+      padding: 6px 8px;
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 5px;
+      cursor: text;
+      margin-bottom: 6px;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      color: var(--gold);
+    }
+
+    .chip .cx {
+      cursor: pointer;
+      color: var(--gold-dim);
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .chip .cx:hover {
+      color: var(--red);
+    }
+
+    .partner-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--cream);
+      flex: 1;
+      min-width: 100px;
+      padding: 2px 0;
+    }
+
+    .partner-dd {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      right: 0;
+      background: var(--gr);
+      border: 1px solid var(--gb);
+      border-radius: 5px;
+      z-index: 50;
+      display: none;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
+    }
+
+    .pdd-item {
+      padding: 9px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+    }
+
+    .pdd-item:hover {
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    /* Date log */
+    .dle {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 7px;
+      padding: 9px;
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 5px;
+    }
+
+    .rb {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 15px;
+      padding: 2px 4px;
+      line-height: 1;
+    }
+
+    .adb {
+      width: 100%;
+      padding: 8px;
+      background: var(--gold-pale);
+      border: 1px dashed var(--gold-dim);
+      border-radius: 5px;
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: .08em;
+      cursor: pointer;
+      transition: background .15s;
+      margin-top: 3px;
+    }
+
+    .adb:hover {
+      background: rgba(201, 168, 76, .2);
+    }
+
+    /* Scan */
+    .sz {
+      border: 2px dashed var(--gold-dim);
+      border-radius: 8px;
+      padding: 20px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--gold-pale);
+      position: relative;
+    }
+
+    .sz:hover {
+      border-color: var(--gold);
+    }
+
+    .sz input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .sp {
+      margin-bottom: 11px;
+      border-radius: 6px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .sp img {
+      width: 100%;
+      max-height: 170px;
+      object-fit: cover;
+    }
+
+    .pb {
+      width: 100%;
+      padding: 10px;
+      background: var(--gold);
+      color: var(--gd);
+      border: none;
+      border-radius: 5px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      cursor: pointer;
+      display: none;
+      margin-bottom: 9px;
+    }
+
+    .pb:disabled {
+      opacity: .45;
+    }
+
+    .pm {
+      font-size: 11px;
+      min-height: 13px;
+      text-align: center;
+    }
+
+    /* Beli */
+    .bov {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 16, 8, .93);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .bov.show {
+      display: flex;
+    }
+
+    .bc {
+      background: var(--gc);
+      border: 1px solid var(--gb);
+      border-radius: 13px;
+      padding: 26px 22px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+    }
+
+    .bprog {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 18px;
+    }
+
+    .bpip {
+      height: 3px;
+      flex: 1;
+      background: var(--gb);
+      border-radius: 2px;
+      transition: background .3s;
+    }
+
+    .bpip.done {
+      background: var(--gold);
+    }
+
+    .bq {
+      font-family: 'Playfair Display', serif;
+      font-size: 12px;
+      color: var(--cd);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .bn {
+      font-family: 'Playfair Display', serif;
+      font-size: 21px;
+      font-weight: 900;
+      color: var(--gold);
+      margin-bottom: 3px;
+    }
+
+    .bvs {
+      font-size: 11px;
+      color: var(--cd);
+      margin-bottom: 14px;
+    }
+
+    .bcomp {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--cream);
+      background: var(--gr);
+      border: 1px solid var(--gb);
+      border-radius: 7px;
+      padding: 13px 15px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tbadge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      background: var(--gold-pale);
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .bch {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .bchoice {
+      padding: 11px 15px;
+      border-radius: 6px;
+      border: 1px solid var(--gb);
+      background: var(--gd);
+      color: var(--cream);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      letter-spacing: .04em;
+      cursor: pointer;
+      transition: all .15s;
+      text-align: left;
+    }
+
+    .bchoice:hover {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    .bchoice.pref {
+      background: rgba(76, 175, 125, .15);
+      border-color: var(--ok);
+      color: var(--ok);
+    }
+
+    .bchoice.less {
+      background: rgba(192, 57, 43, .12);
+      border-color: #c0392b;
+      color: #e74c3c;
+    }
+
+    .bchoice.uns {
+      background: rgba(201, 168, 76, .08);
+      border-color: var(--gold-dim);
+      color: var(--cd);
+    }
+
+    .bneigh {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 18px;
+    }
+
+    .bni {
+      padding: 9px 13px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .bni.above {
+      background: rgba(76, 175, 125, .1);
+      border: 1px solid rgba(76, 175, 125, .3);
+      color: var(--ok);
+    }
+
+    .bni.new {
+      background: var(--gold-pale);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .bni.below {
+      background: rgba(201, 168, 76, .06);
+      border: 1px solid var(--gb);
+      color: var(--cd);
+    }
+
+    .bdone {
+      width: 100%;
+      padding: 13px;
+      background: var(--gold);
+      color: var(--gd);
+      border: none;
+      border-radius: 7px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .1em;
+      cursor: pointer;
+    }
+
+    /* Submit */
+    .sub-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--gold);
+      color: var(--gd);
+      border: none;
+      border-radius: 8px;
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .03em;
+      transition: all .2s;
+      margin-top: 3px;
+    }
+
+    .sub-btn:hover {
+      opacity: .88;
+      transform: translateY(-1px);
+    }
+
+    .sub-btn:disabled {
+      opacity: .4;
+      transform: none;
+      cursor: not-allowed;
+    }
+
+    .smsg {
+      margin-top: 11px;
+      padding: 11px 13px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.6;
+      display: none;
+      white-space: pre-line;
+    }
+
+    .smsg.ok {
+      background: rgba(76, 175, 125, .1);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+
+    .smsg.err {
+      background: rgba(192, 57, 43, .1);
+      border: 1px solid var(--red);
+      color: #e74c3c;
+    }
+
+    .smsg.load {
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+    }
+
+    /* Script */
+    .stog {
+      width: 100%;
+      padding: 11px 15px;
+      background: var(--gc);
+      border: 1px solid var(--gb);
+      border-radius: 8px;
+      color: var(--cd);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: .08em;
+      cursor: pointer;
+      text-align: left;
+      margin-top: 7px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sbox {
+      background: #080e08;
+      border: 1px solid var(--gb);
+      border-radius: 6px;
+      padding: 11px;
+      font-size: 9.5px;
+      color: #7ee787;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 140px;
+      overflow-y: auto;
+      line-height: 1.6;
+      margin: 9px 0;
+      display: none;
+    }
+
+    .cbtn {
+      width: 100%;
+      padding: 8px;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold-dim);
+      border-radius: 5px;
+      color: var(--gold);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .08em;
+      cursor: pointer;
+      display: none;
+      transition: all .2s;
+    }
+
+    .cbtn.copied {
+      color: var(--ok);
+      border-color: var(--ok);
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <header>
+      <div class="hl">
+        <h1>⛳ Golf</h1>
+        <div class="sub">Reid's Portfolio</div>
+      </div>
+      <div class="hr">
+        <a href="https://docs.google.com/spreadsheets/d/147bYNkEYPrC_GnqZZ7jLGW0FORHq--TZFwZ09Sh6mwg" target="_blank" class="hlink">→ Sheet</a>
+        <a href="https://reidgolf.netlify.app" target="_blank" class="hlink">→ reidgolf.netlify.app</a>
+      </div>
+    </header>
+
+    <!-- TAB BAR -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('rankings')">📋 My Rankings</button>
+      <button class="tab" onclick="showTab('log')">+ Log a Round</button>
+    </div>
+
+    <!-- ══════════════════════════════
+     RANKINGS PAGE
+══════════════════════════════ -->
+    <div class="page active" id="page-rankings">
+      <div class="rankings-header">
+        <span class="rankings-title">My Rankings</span>
+        <button class="refresh-btn" onclick="loadRankings()">↺ Refresh</button>
+      </div>
+      <div id="rankingsBody">
+        <div class="load-msg">
+          <div class="load-spinner"></div>
+          Tap Refresh to load from sheet
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+     LOG A ROUND PAGE
+══════════════════════════════ -->
+    <div class="page" id="page-log">
+
+      <!-- SEARCH -->
+      <div class="card open">
+        <div class="ch" onclick="toggleCard(this)"><span class="ct">🔍 Course Search</span><span class="cv">▼</span></div>
+        <div class="cb">
+          <div class="sw">
+            <input class="si" id="cSearch" type="text" placeholder="Search course name..." oninput="onSearch()" autocomplete="off">
+            <span class="sicon">⌕</span>
+            <div class="sr" id="sResults"></div>
+          </div>
+          <div class="ss">
+            <div class="spin" id="sSpin"></div><span id="sTxt"></span>
+          </div>
+          <!-- New course checkbox — shown after search -->
+          <div class="new-course-check" id="newCourseWrap">
+            <input type="checkbox" id="newCourseChk" onchange="toggleNewCourse()">
+            <label for="newCourseChk">New course? Add to rankings</label>
+          </div>
+          <!-- Fill panel -->
+          <div class="fill-panel" id="fillPanel">
+            <div class="fill-panel-title">✓ Auto-filled from web</div>
+            <div class="fill-grid" id="fillGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCAN -->
+      <div class="card">
+        <div class="ch" onclick="toggleCard(this)"><span class="ct">📷 Scan Scorecard</span><span class="cv">▼</span></div>
+        <div class="cb">
+          <div class="sp" id="sprev"><img id="prevImg" src="" alt=""></div>
+          <div class="sz">
+            <input type="file" accept="image/*" capture="environment" id="scFile" onchange="handleFile(event)">
+            <div style="font-size:26px;margin-bottom:5px;">📸</div>
+            <div style="font-size:12px;color:var(--gold);letter-spacing:.05em;">Take photo or upload scorecard</div>
+            <div style="font-size:10px;color:var(--cd);margin-top:3px;">AI extracts tee data automatically</div>
+          </div>
+          <button class="pb" id="pBtn" onclick="parseCard()">Parse with AI</button>
+          <div class="pm" id="pMsg"></div>
+        </div>
+      </div>
+
+      <!-- COURSE INFO (always visible basics) -->
+      <div class="card open">
+        <div class="ch" onclick="toggleCard(this)"><span class="ct">Course Info</span><span class="cv">▼</span></div>
+        <div class="cb">
+          <div class="f"><label>Course Name</label><input type="text" id="cName" placeholder="e.g. Trophy Lake Golf & Casting Club" oninput="onCourseNameType()"></div>
+
+          <!-- NEW COURSE EXTRA FIELDS — hidden unless new course checked -->
+          <div class="new-course-fields" id="newCourseFields">
+            <!-- aka and sub-course removed from UI per user request (applied to <3 courses
+                 historically). Hidden inputs retained so buildRow() and the autocomplete
+                 keep working without code branches. -->
+            <input type="hidden" id="cAlias" value="">
+            <input type="hidden" id="cSub" value="">
+            <div class="f">
+              <label>Tier</label>
+              <div class="tier-row">
+                <button class="tp" onclick="selTier('S')">S</button>
+                <button class="tp" onclick="selTier('A')">A</button>
+                <button class="tp" onclick="selTier('B')">B</button>
+                <button class="tp" onclick="selTier('C')">C</button>
+                <button class="tp" onclick="selTier('D')">D</button>
+                <button class="tp" onclick="selTier('E')">E</button>
+                <button class="tp" onclick="selTier('F')">F</button>
+              </div>
+              <div class="tier-sub" id="tSub">
+                <select id="tSubSel" onchange="updTier()">
+                  <option value="High">High</option>
+                  <option value="Mid" selected>Mid</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              <input type="hidden" id="tierFull">
+            </div>
+            <div id="beliWrap" style="margin-bottom:12px;">
+              <button style="width:100%;padding:9px;background:var(--gold-pale);border:1px solid var(--gold-dim);border-radius:5px;color:var(--gold);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;cursor:pointer;" onclick="startBeli()">⚖️ Rank within tier (Beli-style)</button>
+            </div>
+            <div class="f"><label>Views</label><input type="text" id="views" placeholder="e.g. Puget Sound / Olympics"></div>
+            <div class="f"><label>Notes / Vibe</label><textarea id="notes" rows="2" placeholder="Oki Card. Grass range. Ferry access."></textarea></div>
+            <div class="f">
+              <label>Flags</label>
+              <div class="tgg">
+                <label class="tog"><input type="checkbox" id="grass">
+                  <div class="tt"></div><span class="tl">Grass Range</span>
+                </label>
+                <label class="tog"><input type="checkbox" id="oki">
+                  <div class="tt"></div><span class="tl">Oki Card</span>
+                </label>
+                <label class="tog"><input type="checkbox" id="priv">
+                  <div class="tt"></div><span class="tl">Private</span>
+                </label>
+                <label class="tog"><input type="checkbox" id="goodPace">
+                  <div class="tt"></div><span class="tl">Good Pace</span>
+                </label>
+                <label class="tog"><input type="checkbox" id="pace">
+                  <div class="tt"></div><span class="tl">Bad Pace</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="r2">
+            <div class="f"><label>Rounds Played</label><input type="number" id="rounds" min="1" placeholder="1"></div>
+            <div class="f"><label>Par</label><input type="number" id="par" min="27" max="74" placeholder="72" oninput="updRec()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THIS ROUND -->
+      <div class="card open">
+        <div class="ch" onclick="toggleCard(this)"><span class="ct">This Round</span><span class="cv">▼</span></div>
+        <div class="cb">
+          <div class="f"><label>Date Played</label><input type="date" id="roundDate"></div>
+          <div class="r2">
+            <div class="f">
+              <label>Score <span class="ref" id="pbLabel"></span></label>
+              <input type="number" id="recScore" placeholder="82" oninput="updRec(); updateDifferentialLive();">
+            </div>
+            <div class="f"><label>To Par</label>
+              <div class="rl" id="recLive">—</div>
+            </div>
+          </div>
+          <div class="r2">
+            <div class="f">
+              <label>Holes Played</label>
+              <select id="holesPlayed">
+                <option value="18" selected>18</option>
+                <option value="9">9</option>
+              </select>
+            </div>
+            <div class="f">
+              <label>Differential <span class="ref">USGA</span></label>
+              <div class="rl" id="diffLive">—</div>
+            </div>
+          </div>
+          <div class="r2">
+            <div class="f">
+              <label># Birdies <span class="ref" id="mostBirdLabel"></span></label>
+              <input type="number" id="birdies" min="0" placeholder="0">
+            </div>
+            <div class="f">
+              <label>Eagle? (Hole #) <span class="ref" id="pastEagleLabel"></span></label>
+              <input type="text" id="eagle" placeholder="Hole # or No">
+            </div>
+          </div>
+          <div class="f">
+            <label>Tees Played</label>
+            <select id="teesPlayed" onchange="autoFillRatingSlope()">
+              <option value="">— Select —</option>
+              <option value="Black (Tips)">Black (Tips)</option>
+              <option value="Blue">Blue</option>
+              <option value="White">White</option>
+              <option value="Black / Blue combo">Black / Blue combo</option>
+              <option value="Blue / White combo">Blue / White combo</option>
+            </select>
+          </div>
+          <div class="r2">
+            <div class="f">
+              <label>Rating Used <span class="ref">auto</span></label>
+              <input type="number" id="ratingUsed" step="0.1" min="55" max="80" placeholder="72.8" oninput="updateDifferentialLive()">
+            </div>
+            <div class="f">
+              <label>Slope Used <span class="ref">auto</span></label>
+              <input type="number" id="slopeUsed" min="55" max="155" placeholder="132" oninput="updateDifferentialLive()">
+            </div>
+          </div>
+          <div class="f">
+            <label>Greens Quality <span class="ref" id="greensRef"></span></label>
+            <div class="star-row" id="greensStars">
+              <span class="star" onclick="setStars('greens',1)">★</span>
+              <span class="star" onclick="setStars('greens',2)">★</span>
+              <span class="star" onclick="setStars('greens',3)">★</span>
+              <span class="star" onclick="setStars('greens',4)">★</span>
+              <span class="star" onclick="setStars('greens',5)">★</span>
+              <span class="star-label" id="greensLabel">—</span>
+            </div>
+            <input type="hidden" id="greensVal" value="0">
+          </div>
+          <div class="f">
+            <label>Value <span class="ref" id="valueRef"></span></label>
+            <div class="star-row" id="valueStars">
+              <span class="star" onclick="setStars('value',1)">★</span>
+              <span class="star" onclick="setStars('value',2)">★</span>
+              <span class="star" onclick="setStars('value',3)">★</span>
+              <span class="star" onclick="setStars('value',4)">★</span>
+              <span class="star" onclick="setStars('value',5)">★</span>
+              <span class="star-label" id="valueLabel">—</span>
+            </div>
+            <input type="hidden" id="valueVal" value="0">
+          </div>
+          <div class="f">
+            <label>Playing Partners</label>
+            <div class="partner-wrap">
+              <div class="partner-chips" id="partnerChips" onclick="focusPartnerInput()">
+                <input class="partner-input" id="partnerInput" type="text" placeholder="Type a name..." oninput="onPartnerInput()" onkeydown="partnerKeydown(event)">
+              </div>
+              <div class="partner-dd" id="partnerDd"></div>
+            </div>
+          </div>
+          <div class="f" style="margin-top:4px;">
+            <label style="color:var(--cd);">Past Rounds Log</label>
+            <div id="dLog"></div>
+            <button class="adb" onclick="addDate()">+ Add previous round</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEE DATA (new course only) -->
+      <div class="card" id="teeCard" style="display:none;">
+        <div class="ch" onclick="toggleCard(this)"><span class="ct">Tee Data</span><span class="cv">▼</span></div>
+        <div class="cb">
+          <div class="tg">
+            <div class="tgh">
+              <div class="td-dot" style="background:#3a7fd5;"></div><span class="tgl">Blue</span><input class="ton" id="blueN" placeholder="original name (e.g. Senior)">
+            </div>
+            <div class="r3">
+              <div class="f"><label>Yards</label><input type="number" id="blueY" placeholder="6756"></div>
+              <div class="f"><label>Rating</label><input type="number" id="blueR" step="0.1" placeholder="72.8"></div>
+              <div class="f"><label>Slope</label><input type="number" id="blueS" placeholder="132"></div>
+            </div>
+          </div>
+          <div class="tg">
+            <div class="tgh">
+              <div class="td-dot" style="background:#1a1a1a;border:1px solid #555;"></div><span class="tgl">Black (Tips)</span><input class="ton" id="blackN" placeholder="original name (e.g. Husky)">
+            </div>
+            <div class="r3">
+              <div class="f"><label>Yards</label><input type="number" id="blackY" placeholder="7206"></div>
+              <div class="f"><label>Rating</label><input type="number" id="blackR" step="0.1" placeholder="74.5"></div>
+              <div class="f"><label>Slope</label><input type="number" id="blackS" placeholder="135"></div>
+            </div>
+          </div>
+          <div class="tg">
+            <div class="tgh">
+              <div class="td-dot" style="background:#e8e8e0;border:1px solid #aaa;"></div><span class="tgl">White</span><input class="ton" id="whiteN" placeholder="original name (e.g. Resort)">
+            </div>
+            <div class="r3">
+              <div class="f"><label>Yards</label><input type="number" id="whiteY" placeholder="6162"></div>
+              <div class="f"><label>Rating</label><input type="number" id="whiteR" step="0.1" placeholder="69.7"></div>
+              <div class="f"><label>Slope</label><input type="number" id="whiteS" placeholder="129"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div style="padding:6px 0 14px;">
+        <button class="sub-btn" id="subBtn" onclick="doSubmit()">Log Round</button>
+        <div class="smsg" id="sMsg"></div>
+      </div>
+
+      <!-- APPS SCRIPT -->
+      <button class="stog" onclick="togScript()"><span>🎨 Apply Colors + Sort (Apps Script)</span><span id="sArr">▼</span></button>
+      <div class="sbox" id="sBox">function formatSheet(){
+        var ss=SpreadsheetApp.getActiveSpreadsheet(),sheet=ss.getActiveSheet();
+        var lastRow=sheet.getLastRow(),lastCol=sheet.getLastColumn();
+        var tierColors={"S":{bg:"#FFD700",fg:"#000"},"A":{bg:"#50C878",fg:"#000"},"B":{bg:"#2E8B57",fg:"#fff"},"High C":{bg:"#FFFFFF",fg:"#000"},"Mid C":{bg:"#F5F5F5",fg:"#000"},"Low C":{bg:"#EBEBEB",fg:"#000"},"D":{bg:"#FFD580",fg:"#000"},"E":{bg:"#CCCCCC",fg:"#000"},"F":{bg:"#FF6B6B",fg:"#fff"}};
+        var tierOrder={"S":1,"A":2,"B":3,"High C":4,"Mid C":5,"Low C":6,"D":7,"E":8,"F":9};
+        if(lastRow>2){
+        var dr=sheet.getRange(2,1,lastRow-1,lastCol),data=dr.getValues();
+        data.sort(function(a,b){var ta=tierOrder[a[2]?.toString().trim()]||99,tb=tierOrder[b[2]?.toString().trim()]||99;return ta!==tb?ta-tb:(a[0]||999)-(b[0]||999);});
+        dr.setValues(data);
+        for(var i=0;i<data.length;i++)sheet.getRange(i+2,1).setValue(i+1); lastRow=sheet.getLastRow(); } var hdr=sheet.getRange(1,1,1,lastCol);hdr.setBackground("#0e1a0e");hdr.setFontColor("#C9A84C");hdr.setFontWeight("bold"); sheet.setFrozenRows(1);sheet.setFrozenColumns(3); var lastTier="" ,shade=false; for(var i=2;i<=lastRow;i++){ var tier=sheet.getRange(i,3).getValue().toString().trim(),row=sheet.getRange(i,1,1,lastCol); if(tierColors[tier]){ if(tier!==lastTier){shade=false;lastTier=tier;}else{shade=!shade;} row.setBackground(shade?shadeColor(tierColors[tier].bg,-10):tierColors[tier].bg); row.setFontColor(tierColors[tier].fg); } sheet.getRange(i,2).setFontWeight("bold"); if(sheet.getRange(i,21).getValue().toString().trim()==="Bad" ){var tc=sheet.getRange(i,3);tc.setFontWeight("bold");tc.setFontColor("#CC0000");} if(sheet.getRange(i,20).getValue().toString().trim()==="Yes" )sheet.getRange(i,2).setFontStyle("italic"); } for(var c=1;c<=lastCol;c++)sheet.autoResizeColumn(c); SpreadsheetApp.getUi().alert("Done! Sorted by tier and formatted."); } function shadeColor(hex,pct){var n=parseInt(hex.replace("#",""),16),r=Math.min(255,Math.max(0,(n>>16)+pct)),g=Math.min(255,Math.max(0,((n>>8)&0xFF)+pct)),b=Math.min(255,Math.max(0,(n&0xFF)+pct));return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}< /div>
+            <button class="cbtn" id="cBtn" onclick="copyScript()">Copy Script</button>
+
+      </div><!-- /page-log -->
+
+      <!-- BELI OVERLAY -->
+      <div class="bov" id="bOv">
+        <div class="bc">
+          <div class="bprog" id="bProg"></div>
+          <div id="bCont"></div>
+        </div>
+      </div>
+
+    </div><!-- /app -->
+
+    <script>
+      // ── Config ──
+      const CLIENT_ID = '390848816796-rca0q7tnuprhbrtfc9odqm3ibfr7brr5.apps.googleusercontent.com';
+      const SHEET_ID = '147bYNkEYPrC_GnqZZ7jLGW0FORHq--TZFwZ09Sh6mwg';
+      const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+      const RANKINGS_RANGE = 'Rankings!A2:AE200'; // 31 columns: A..AE
+      const RANKINGS_COURSEID_RANGE = 'Rankings!AD2:AD200'; // for upsert lookup
+      const ROUND_HISTORY_APPEND_RANGE = 'Round History!A:Q'; // 17 columns
+      const TOKEN_KEY = 'golfToken';
+      const TOKEN_EXPIRY_KEY = 'golfTokenExpiry';
+      let accessToken = null;
+      let currentPortfolioEntry = null; // set when user picks an existing course
+
+      // ── Tier config ──
+      const TIER_ORDER = ["S", "A", "B", "High C", "Mid C", "Low C", "D", "E", "F"];
+      const TIER_COLORS = {
+        "S": "#FFD700",
+        "A": "#50C878",
+        "B": "#2E8B57",
+        "High C": "#c8c8c0",
+        "Mid C": "#b8b8b0",
+        "Low C": "#a8a8a0",
+        "D": "#e8a030",
+        "E": "#888",
+        "F": "#c0392b"
+      };
+      const TIER_TEXT = {
+        "S": "#000",
+        "A": "#000",
+        "B": "#fff",
+        "High C": "#222",
+        "Mid C": "#222",
+        "Low C": "#222",
+        "D": "#000",
+        "E": "#fff",
+        "F": "#fff"
+      };
+
+      // ── Portfolio (loaded from sheet at app start) ──
+      // Shape per entry: { rank, name, tier, courseId, par, rounds, pb, mostBirdies,
+      //   eagles, greens, value, tees: { blue|black|white: {y,r,s} },
+      //   aliases, subs, notes, partners, … }
+      let PORTFOLIO = [];
+
+      // ── Phase 2: sessionStorage token cache ──
+      function getCachedToken() {
+        const t = sessionStorage.getItem(TOKEN_KEY);
+        const exp = parseInt(sessionStorage.getItem(TOKEN_EXPIRY_KEY) || '0');
+        if (t && Date.now() < exp - 60000) return t;
+        return null;
+      }
+      function setCachedToken(t, expiresInSec) {
+        sessionStorage.setItem(TOKEN_KEY, t);
+        sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + (expiresInSec || 3600) * 1000));
+      }
+      function clearCachedToken() {
+        sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+        accessToken = null;
+      }
+
+      // ── Phase 2: parse a sheet row into a PORTFOLIO entry ──
+      function numOrNull(v) {
+        if (v === '' || v == null) return null;
+        const n = parseFloat(v);
+        return isNaN(n) ? null : n;
+      }
+      function parseStatsCell(s) {
+        s = s || '';
+        const mb = s.match(/Most Birdies:\s*(\d+)/i);
+        const eg = s.match(/Eagle\s*\(Hole\s*([^)]+)\)/i);
+        return {
+          mostBirdies: mb ? parseInt(mb[1]) : 0,
+          eagles: eg ? [eg[1].trim()] : []
+        };
+      }
+      function parsePortfolioRow(r) {
+        // Column index map (0-based) — matches Apps Script COL constants minus 1:
+        // 0=rank, 1=name, 2=tier, 3=rounds, 4=record, 5-7=blueYRS, 8-10=blackYRS,
+        // 11-13=whiteYRS, 14=teeNotes, 15=views, 16=stats, 17=grass, 18=oki,
+        // 19=private, 20=pace, 21=notes, 22=firstPlayed, 23=lastPlayed,
+        // 24=avgScore, 25=teesPlayed, 26=greens, 27=value, 28=partners,
+        // 29=courseId, 30=par
+        const stats = parseStatsCell(r[16]);
+        const recM = (r[4] || '').toString().match(/(\d+)\s*\(/);
+        const grM = (r[26] || '').toString().match(/(\d+)/);
+        const vlM = (r[27] || '').toString().match(/(\d+)/);
+        return {
+          rank: parseInt(r[0]) || 0,
+          name: (r[1] || '').toString().trim(),
+          tier: (r[2] || '').toString().trim(),
+          rounds: parseInt(r[3]) || 0,
+          record: r[4] || '',
+          pb: recM ? parseInt(recM[1]) : null,
+          mostBirdies: stats.mostBirdies,
+          eagles: stats.eagles,
+          tees: {
+            blue:  { y: numOrNull(r[5]),  r: numOrNull(r[6]),  s: numOrNull(r[7])  },
+            black: { y: numOrNull(r[8]),  r: numOrNull(r[9]),  s: numOrNull(r[10]) },
+            white: { y: numOrNull(r[11]), r: numOrNull(r[12]), s: numOrNull(r[13]) }
+          },
+          teeNotes: r[14] || '',
+          views: r[15] || '',
+          grass: r[17] || '',
+          oki: r[18] || '',
+          private: r[19] || '',
+          pace: r[20] || '',
+          notes: r[21] || '',
+          firstPlayed: r[22] || '',
+          lastPlayed: r[23] || '',
+          avgScore: r[24] || '',
+          teesPlayed: r[25] || '',
+          greens: grM ? parseInt(grM[1]) : 0,
+          value: vlM ? parseInt(vlM[1]) : 0,
+          partners: r[28] || '',
+          courseId: (r[29] || '').toString().trim(),
+          par: r[30] !== '' && r[30] != null ? parseInt(r[30]) : null,
+          // Aliases & subs aren't currently persisted to the sheet — default empty.
+          aliases: [],
+          subs: []
+        };
+      }
+      function rowsToPortfolio(rows) {
+        return (rows || []).filter(r => r && r[1]).map(parsePortfolioRow);
+      }
+
+      // ── Phase 2: load PORTFOLIO from the Rankings tab ──
+      async function loadPortfolio() {
+        try {
+          if (!accessToken) await getAccessToken();
+          const resp = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANKINGS_RANGE)}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+          if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || 'Sheet read failed'); }
+          const data = await resp.json();
+          PORTFOLIO = rowsToPortfolio(data.values || []);
+          return PORTFOLIO;
+        } catch (err) {
+          console.error('loadPortfolio failed:', err);
+          throw err;
+        }
+      }
+
+      // ── Phase 2: slugify (mirrors Apps Script slugify) ──
+      function slugify(name) {
+        return (name || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+      function generateUniqueCourseId(name) {
+        const base = slugify(name);
+        const existing = new Set(PORTFOLIO.map(p => p.courseId).filter(Boolean));
+        let candidate = base, n = 2;
+        while (existing.has(candidate)) { candidate = `${base}-${n}`; n++; }
+        return candidate;
+      }
+
+      // ── Phase 2: USGA differential ──
+      // Formula: (score - rating) * 113 / slope, rounded to 1 dp.
+      // Returns null if any input is missing or slope is out of the legal range.
+      function computeDifferential(score, rating, slope) {
+        if (score == null || rating == null || slope == null) return null;
+        if (slope < 55 || slope > 155) return null;
+        const raw = ((score - rating) * 113) / slope;
+        return Math.round(raw * 10) / 10;
+      }
+
+      // ── Phase 2: pick the rating/slope for a portfolio entry + teesPlayed string ──
+      // Combo tees ("Black / Blue combo", "Blue / White combo") have their own
+      // officially published rating/slope; we do NOT average the two parent
+      // sets, because that gives wrong differentials. Combos return null here
+      // and the form prompts the user to enter the actual values.
+      function lookupTeeStats(entry, teesPlayedLabel) {
+        if (!entry || !entry.tees || !teesPlayedLabel) return { rating: null, slope: null };
+        const t = entry.tees;
+        const lbl = teesPlayedLabel.toLowerCase();
+        if (lbl.includes('combo')) return { rating: null, slope: null }; // user enters manually
+        if (lbl.includes('black')) return { rating: t.black.r, slope: t.black.s };
+        if (lbl.includes('blue'))  return { rating: t.blue.r,  slope: t.blue.s  };
+        if (lbl.includes('white')) return { rating: t.white.r, slope: t.white.s };
+        return { rating: null, slope: null };
+      }
+
+      // ── Phase 2: write a Round History row (or rows) ──
+      async function appendRoundHistory(roundRows) {
+        if (!roundRows.length) return;
+        const resp = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(ROUND_HISTORY_APPEND_RANGE)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: roundRows })
+          }
+        );
+        if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+        if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || 'Round History write failed'); }
+        return resp.json();
+      }
+
+      // ── Phase 2: upsert a Rankings rollup row, keyed on courseId ──
+      // If courseId already exists in column AD → update that row in place.
+      // Otherwise → append a new row at the bottom.
+      async function upsertRankingsRow(row, courseId) {
+        // Find the row index (if any) where AD == courseId.
+        const findResp = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANKINGS_COURSEID_RANGE)}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (findResp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+        if (!findResp.ok) { const e = await findResp.json(); throw new Error(e.error?.message || 'Rankings lookup failed'); }
+        const findData = await findResp.json();
+        const ids = (findData.values || []).map(r => (r[0] || '').toString().trim());
+        const idx = ids.findIndex(id => id === courseId);
+
+        if (idx >= 0) {
+          const sheetRow = idx + 2; // header is row 1; data starts row 2
+          const range = `Rankings!A${sheetRow}:AE${sheetRow}`;
+          const upd = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+            {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [row] })
+            }
+          );
+          if (!upd.ok) { const e = await upd.json(); throw new Error(e.error?.message || 'Rankings update failed'); }
+          return { action: 'updated', row: sheetRow };
+        } else {
+          const app = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Rankings!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+            {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [row] })
+            }
+          );
+          if (!app.ok) { const e = await app.json(); throw new Error(e.error?.message || 'Rankings append failed'); }
+          return { action: 'appended' };
+        }
+      }
+
+      // ── Tab navigation ──
+      function showTab(t) {
+        document.querySelectorAll('.tab').forEach((b, i) => b.classList.toggle('active', ['rankings', 'log'][i] === t));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + t).classList.add('active');
+        // Phase 2: lazy-load PORTFOLIO on first interaction with either tab.
+        // Silent if there's a cached token; otherwise triggers the auth popup
+        // at a natural moment (user has decided to engage with their data).
+        if (!PORTFOLIO.length) {
+          loadPortfolio().then(() => {
+            if (t === 'rankings') renderRankings(PORTFOLIO);
+          }).catch(err => {
+            // Stay quiet — the visible Rankings panel shows its own error UI,
+            // and the autocomplete will recover the next time the user types.
+            console.warn('showTab portfolio load failed:', err);
+          });
+        }
+      }
+
+      function toggleCard(h) {
+        h.parentElement.classList.toggle('open');
+      }
+
+      // ── Rankings: load from sheet ──
+      // Uses the already-parsed PORTFOLIO (loaded at app init). If PORTFOLIO is
+      // empty (e.g. user hit the page and immediately tapped Rankings before the
+      // init load completed), we force a fresh load.
+      async function loadRankings() {
+        const body = document.getElementById('rankingsBody');
+        if (!PORTFOLIO.length) {
+          body.innerHTML = '<div class="load-msg"><div class="load-spinner"></div>Loading from sheet...</div>';
+          try {
+            await loadPortfolio();
+          } catch (err) {
+            body.innerHTML = `<div class="load-msg" style="color:var(--red);">Error: ${err.message||err}<br><br><button onclick="loadRankings()" style="padding:8px 16px;background:var(--gold);color:#000;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Try Again</button></div>`;
+            return;
+          }
+        }
+        renderRankings(PORTFOLIO);
+      }
+
+      function renderRankings(entries) {
+        // Group by tier
+        const groups = {};
+        TIER_ORDER.forEach(t => groups[t] = []);
+        entries.forEach(c => {
+          if (groups[c.tier]) groups[c.tier].push(c);
+        });
+
+        const body = document.getElementById('rankingsBody');
+        body.innerHTML = '';
+
+        TIER_ORDER.forEach(tier => {
+          const courses = groups[tier];
+          if (!courses.length) return;
+          const bg = TIER_COLORS[tier] || '#555';
+          const fg = TIER_TEXT[tier] || '#fff';
+          const grp = document.createElement('div');
+          grp.className = 'tier-group';
+          grp.style.borderColor = bg + '55';
+
+          grp.innerHTML = `
+      <div class="tier-group-header" style="background:${bg}20;" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span class="tier-badge" style="color:${bg};">${tier}</span>
+        <span class="tier-group-label" style="color:${bg};">${tierFullName(tier)}</span>
+        <span class="tier-count" style="color:${bg};">${courses.length} course${courses.length!==1?'s':''}</span>
+        <span class="tier-chevron" style="color:${bg};">▼</span>
+      </div>
+      <div class="tier-courses" id="tier-${tier.replace(/\s/g,'_')}"></div>`;
+
+          const coursesEl = grp.querySelector('.tier-courses');
+          courses.forEach(c => {
+            const rank        = c.rank || '';
+            const name        = c.name || '';
+            const record      = c.record || '—';
+            const rounds      = c.rounds || '';
+            const firstPlayed = c.firstPlayed || '';
+            const lastPlayed  = c.lastPlayed || '';
+            const avgScore    = c.avgScore || '';
+            const partners    = c.partners || '';
+            const maxBirdies  = c.mostBirdies ? c.mostBirdies : '—';
+            const eagles      = c.eagles && c.eagles.length ? c.eagles.map(h => `Hole ${h}`).join(', ') : 'None';
+
+            const row = document.createElement('div');
+            row.className = 'course-row';
+
+            row.innerHTML = `
+        <div class="course-row-header" onclick="toggleCourseDetail(this.parentElement)">
+          <span class="course-rank">#${rank}</span>
+          <span class="course-name">${name}</span>
+          <span class="course-meta">
+            <span class="course-record">${record}</span>
+            <span class="course-rounds">${rounds}r</span>
+          </span>
+          <span class="course-chevron">▼</span>
+        </div>
+        <div class="course-detail">
+          <div class="detail-grid">
+            <div class="detail-item"><div class="detail-label">Record</div><div class="detail-val gold">${record}</div></div>
+            <div class="detail-item"><div class="detail-label">Rounds Played</div><div class="detail-val">${rounds||'—'}</div></div>
+            <div class="detail-item"><div class="detail-label">Most Birdies</div><div class="detail-val ok">${maxBirdies}</div></div>
+            <div class="detail-item"><div class="detail-label">Eagles</div><div class="detail-val">${eagles}</div></div>
+            <div class="detail-item"><div class="detail-label">Avg Score</div><div class="detail-val">${avgScore||'—'}</div></div>
+            <div class="detail-item"><div class="detail-label">First Played</div><div class="detail-val">${firstPlayed||'—'}</div></div>
+          </div>
+          ${partners?`<div class="detail-tags"><div class="dtag ok">👥 ${partners}</div></div>`:''}
+          <button class="log-round-btn" onclick="prefillAndLog('${name.replace(/'/g,"\\'")}')">+ Log a Round Here</button>
+        </div>`;
+
+            coursesEl.appendChild(row);
+          });
+
+          body.appendChild(grp);
+        });
+      }
+
+      function tierFullName(t) {
+        const m = {
+          "S": "Prestige",
+          "A": "High-End",
+          "B": "Above Average",
+          "High C": "Reliable Value (High)",
+          "Mid C": "Reliable Value",
+          "Low C": "Reliable Value (Low)",
+          "D": "Needs Work",
+          "E": "Poor Experience",
+          "F": "Avoid"
+        };
+        return m[t] || t;
+      }
+
+      function toggleCourseDetail(row) {
+        row.classList.toggle('open');
+      }
+
+      function prefillAndLog(name) {
+        showTab('log');
+        document.getElementById('cSearch').value = name;
+        document.getElementById('cName').value = name;
+        const c = PORTFOLIO.find(p => p.name === name);
+        if (c) fillPortfolio(c, null);
+        setSS(`Loaded ${name}`, false);
+      }
+
+      // ── Search ──
+      let stimer = null;
+
+      function onSearch() {
+        clearTimeout(stimer);
+        const q = document.getElementById('cSearch').value.trim();
+        if (q.length < 1) {
+          hideSR();
+          return;
+        }
+        stimer = setTimeout(() => doSearch(q), 350);
+      }
+
+      function hideSR() {
+        document.getElementById('sResults').style.display = 'none';
+      }
+
+      function onCourseNameType() {
+        const v = document.getElementById('cName').value.trim();
+        const wrap = document.getElementById('newCourseWrap');
+        wrap.style.display = v.length > 1 ? 'flex' : 'none';
+      }
+
+      function toggleNewCourse() {
+        const chk = document.getElementById('newCourseChk').checked;
+        document.getElementById('newCourseFields').classList.toggle('vis', chk);
+        document.getElementById('teeCard').style.display = chk ? '' : 'none';
+        document.getElementById('subBtn').textContent = chk ? 'Add Course + Log Round' : 'Log Round';
+      }
+
+      function matchPortfolio(q) {
+        const ql = q.toLowerCase();
+        return PORTFOLIO.filter(c => c.name.toLowerCase().includes(ql) || c.aliases.some(a => a.toLowerCase().includes(ql)) || c.subs.some(s => s.toLowerCase().includes(ql)));
+      }
+
+      async function doSearch(q) {
+        setSS('Searching...', true);
+        const res = document.getElementById('sResults');
+        res.innerHTML = '';
+        const local = matchPortfolio(q);
+        const exactMatch = local.some(c => c.name.toLowerCase() === q.toLowerCase());
+
+        if (local.length) {
+          const grp = document.createElement('div');
+          grp.className = 'sri-group';
+          grp.textContent = 'In Your Portfolio';
+          res.appendChild(grp);
+          local.forEach(c => {
+            if (c.subs && c.subs.length > 0) {
+              c.subs.forEach(sub => {
+                const el = mkSRI(`${c.name}`, sub, () => {
+                  fillPortfolio(c, sub);
+                  hideSR();
+                });
+                res.appendChild(el);
+              });
+            } else {
+              const el = mkSRI(c.name, `#${c.rank} · ${c.tier}`, () => {
+                fillPortfolio(c, null);
+                hideSR();
+              });
+              res.appendChild(el);
+            }
+          });
+        }
+
+        if (!exactMatch) {
+          const addEl = document.createElement('div');
+          addEl.className = 'sri';
+          addEl.innerHTML = `<span class="rn" style="color:var(--gold);">+ Add "${q}" as new course</span><span class="rm">new</span>`;
+          addEl.onclick = () => {
+            document.getElementById('cName').value = q;
+            document.getElementById('newCourseChk').checked = true;
+            toggleNewCourse();
+            document.getElementById('newCourseWrap').style.display = 'flex';
+            hideSR();
+            setSS('', false);
+          };
+          if (!local.length) {
+            const grp = document.createElement('div');
+            grp.className = 'sri-group';
+            grp.textContent = 'Not in Portfolio';
+            res.appendChild(grp);
+          }
+          res.appendChild(addEl);
+        }
+
+        res.style.display = 'block';
+        setSS('', false);
+
+        // Background web search
+        if (!local.length) {
+          try {
+            const r = await fetch("https://api.anthropic.com/v1/messages", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 1000,
+                tools: [{
+                  type: "web_search_20250305",
+                  name: "web_search"
+                }],
+                messages: [{
+                  role: "user",
+                  content: `Search for the golf course "${q}" and return ONLY valid JSON no markdown:
+{"courseName":"string","city":"string","par":number_or_null,"tees":[{"color":"Blue","originalName":"string","yards":number_or_null,"rating":number_or_null,"slope":number_or_null,"confidence":"high|medium|low"},{"color":"Black","originalName":"string","yards":number_or_null,"rating":number_or_null,"slope":number_or_null,"confidence":"high|medium|low"},{"color":"White","originalName":"string","yards":number_or_null,"rating":number_or_null,"slope":number_or_null,"confidence":"high|medium|low"}],"views":"string_or_null","notes":"string_or_null"}`
+                }]
+              })
+            });
+            const d = await r.json();
+            const txt = d.content.filter(b => b.type === 'text').map(b => b.text).join('');
+            const parsed = JSON.parse(txt.replace(/```json|```/g, '').trim());
+            if (parsed && parsed.courseName) {
+              const grp = document.createElement('div');
+              grp.className = 'sri-group';
+              grp.textContent = 'Web Result';
+              res.appendChild(grp);
+              const el = mkSRI(parsed.courseName, parsed.city || 'Web result', () => {
+                fillWeb(parsed);
+                hideSR();
+              });
+              res.appendChild(el);
+              res.style.display = 'block';
+            }
+          } catch (e) {}
+        }
+      }
+
+      function mkSRI(name, meta, cb) {
+        const d = document.createElement('div');
+        d.className = 'sri';
+        d.innerHTML = `<span class="rn">${name}</span><span class="rm">${meta}</span>`;
+        d.onclick = cb;
+        return d;
+      }
+
+      function setSS(t, spin) {
+        document.getElementById('sTxt').textContent = t;
+        document.getElementById('sSpin').style.display = spin ? 'block' : 'none';
+      }
+
+      function fillPortfolio(c, sub) {
+        currentPortfolioEntry = c; // remember for submit-time courseId + tee lookup
+        document.getElementById('cName').value = c.name;
+        document.getElementById('cSearch').value = c.name;
+        if (sub && document.getElementById('cSub')) document.getElementById('cSub').value = sub;
+        document.getElementById('newCourseWrap').style.display = 'flex';
+        // Par: fill if known, else leave blank and visually flag for entry
+        const parEl = document.getElementById('par');
+        if (c.par != null) {
+          parEl.value = c.par;
+          parEl.placeholder = '';
+        } else {
+          parEl.value = '';
+          parEl.placeholder = 'Enter par';
+          parEl.style.borderColor = 'var(--gold)';
+        }
+        document.getElementById('rounds').value = (c.rounds || 0) + 1;
+        if (c.pb && c.par) {
+          const diff = c.pb - c.par;
+          const s = diff > 0 ? `+${diff}` : diff === 0 ? 'E' : `${diff}`;
+          document.getElementById('pbLabel').textContent = `PB: ${c.pb} (${s})`;
+        }
+        document.getElementById('mostBirdLabel').textContent = c.mostBirdies > 0 ? `most: ${c.mostBirdies}` : '';
+        document.getElementById('pastEagleLabel').textContent = c.eagles && c.eagles.length ? `past: Hole ${c.eagles.join(', ')}` : c.rounds > 0 ? 'past: none' : '';
+        if (c.greens > 0) {
+          setStars('greens', c.greens);
+          document.getElementById('greensRef').textContent = `avg: ${c.greens}/5`;
+        }
+        if (c.value > 0) {
+          setStars('value', c.value);
+          document.getElementById('valueRef').textContent = `avg: ${c.value}/5`;
+        }
+        // Phase 2: auto-fill rating/slope if tees already selected
+        autoFillRatingSlope();
+        document.getElementById('fillPanel').style.display = 'none';
+        setSS(`Loaded — Rank #${c.rank} · ${c.rounds} rounds previously`, false);
+      }
+
+      // ── Phase 2: auto-fill rating/slope when course or tees changes ──
+      function autoFillRatingSlope() {
+        const teesEl   = document.getElementById('teesPlayed');
+        const ratingEl = document.getElementById('ratingUsed');
+        const slopeEl  = document.getElementById('slopeUsed');
+        if (!teesEl || !ratingEl || !slopeEl) return;
+        const tees = teesEl.value;
+        // Reset any previous hint styling
+        ratingEl.style.borderColor = '';
+        slopeEl.style.borderColor = '';
+        ratingEl.placeholder = '72.8';
+        slopeEl.placeholder  = '132';
+        if (!currentPortfolioEntry || !tees) return;
+        const isCombo = tees.toLowerCase().includes('combo');
+        const { rating, slope } = isCombo
+          ? { rating: null, slope: null }
+          : lookupTeeStats(currentPortfolioEntry, tees);
+        if (rating == null || slope == null) {
+          // Either combo tees (intentionally not stored) or a tee set the
+          // course hasn't had rating/slope entered for yet. Flag the inputs
+          // with a gold border + scorecard prompt; the user types the actual
+          // values, and at submit time we'll persist them back to the course's
+          // tee columns so the next round auto-fills.
+          ratingEl.placeholder = 'enter from scorecard';
+          slopeEl.placeholder  = 'enter from scorecard';
+          ratingEl.style.borderColor = 'var(--gold)';
+          slopeEl.style.borderColor  = 'var(--gold)';
+          updateDifferentialLive();
+          return;
+        }
+        if (!ratingEl.value) ratingEl.value = rating;
+        if (!slopeEl.value)  slopeEl.value  = slope;
+        updateDifferentialLive();
+      }
+
+      // ── Phase 2: live differential calculation as user types ──
+      function updateDifferentialLive() {
+        const score  = parseInt(document.getElementById('recScore').value);
+        const rating = parseFloat(document.getElementById('ratingUsed')?.value);
+        const slope  = parseInt(document.getElementById('slopeUsed')?.value);
+        const el = document.getElementById('diffLive');
+        if (!el) return;
+        const d = computeDifferential(
+          isNaN(score) ? null : score,
+          isNaN(rating) ? null : rating,
+          isNaN(slope) ? null : slope
+        );
+        if (d == null) { el.textContent = '—'; el.className = 'rl'; return; }
+        const sign = d > 0 ? '+' : '';
+        el.textContent = `${sign}${d.toFixed(1)}`;
+        el.className = 'rl ' + (d < 0 ? 'under' : d < 5 ? 'even' : 'over');
+      }
+
+      function fillWeb(data) {
+        document.getElementById('cName').value = data.courseName || '';
+        document.getElementById('cSearch').value = data.courseName || '';
+        if (data.par) document.getElementById('par').value = data.par;
+        if (data.views && document.getElementById('views')) document.getElementById('views').value = data.views;
+        if (data.notes && document.getElementById('notes')) document.getElementById('notes').value = data.notes;
+        const filled = [];
+        data.tees && data.tees.forEach(t => {
+          const p = t.color.toLowerCase(),
+            c = t.confidence || 'low';
+          const sf = (id, v, label) => {
+            const el = document.getElementById(id);
+            if (el && v != null) {
+              el.value = v;
+              el.classList.remove('ch-hi', 'ch-me', 'ch-lo');
+              el.classList.add(c === 'high' ? 'ch-hi' : c === 'medium' ? 'ch-me' : 'ch-lo');
+              filled.push({
+                label,
+                val: v,
+                conf: c
+              });
+            } else {
+              filled.push({
+                label,
+                val: null,
+                conf: 'na'
+              });
+            }
+          };
+          sf(`${p}Y`, t.yards, `${t.color} Yards`);
+          sf(`${p}R`, t.rating, `${t.color} Rating`);
+          sf(`${p}S`, t.slope, `${t.color} Slope`);
+          const ne = document.getElementById(`${p}N`);
+          if (ne && t.originalName) ne.value = t.originalName;
+        });
+        if (data.par) filled.unshift({
+          label: 'Par',
+          val: data.par,
+          conf: 'high'
+        });
+        const panel = document.getElementById('fillPanel');
+        const grid = document.getElementById('fillGrid');
+        grid.innerHTML = filled.map(f => `<div class="fill-item"><div class="fill-dot ${f.val!=null?f.conf:'na'}"></div><span class="fi-label">${f.label}:</span>${f.val!=null?`<span class="fi-val">${f.val}</span>`:`<span class="fi-empty">—</span>`}</div>`).join('');
+        panel.style.display = 'block';
+        if (document.getElementById('teeCard')) document.getElementById('teeCard').classList.add('open');
+        setSS('', false);
+      }
+
+      // ── Tier ──
+      let selT = '';
+
+      function selTier(t) {
+        selT = t;
+        document.querySelectorAll('.tp').forEach(b => {
+          b.className = 'tp';
+          if (b.textContent.trim() === t) b.classList.add('sel-' + t);
+        });
+        document.getElementById('tSub').classList.toggle('vis', t === 'C');
+        updTier();
+      }
+
+      function updTier() {
+        let f = selT;
+        if (selT === 'C') f = document.getElementById('tSubSel').value + ' C';
+        document.getElementById('tierFull').value = f;
+      }
+
+      // ── Stars ──
+      const starLabels = {
+        1: 'Poor',
+        2: 'Below Avg',
+        3: 'Average',
+        4: 'Good',
+        5: 'Excellent'
+      };
+
+      function setStars(type, n) {
+        document.getElementById(`${type}Val`).value = n;
+        document.getElementById(`${type}Label`).textContent = starLabels[n] || '—';
+        document.getElementById(`${type}Stars`).querySelectorAll('.star').forEach((s, i) => s.classList.toggle('on', i < n));
+      }
+
+      // ── Record ──
+      function updRec() {
+        const s = parseInt(document.getElementById('recScore').value),
+          p = parseInt(document.getElementById('par').value),
+          el = document.getElementById('recLive');
+        if (!s || !p) {
+          el.textContent = '—';
+          el.className = 'rl';
+          return;
+        }
+        const d = s - p,
+          str = d > 0 ? `+${d}` : d === 0 ? 'E' : `${d}`;
+        el.textContent = `${s} (${str})`;
+        el.className = 'rl ' + (d < 0 ? 'under' : d === 0 ? 'even' : 'over');
+      }
+
+      function buildRec() {
+        const s = parseInt(document.getElementById('recScore').value),
+          p = parseInt(document.getElementById('par').value);
+        if (!s || !p) return '';
+        const d = s - p,
+          str = d > 0 ? `+${d}` : d === 0 ? 'E' : `${d}`;
+        return `${s} (${str})`;
+      }
+
+      // ── Partners ──
+      let partners = [];
+      let allPartners = JSON.parse(localStorage.getItem('golfPartners') || '["Alex","Zubin","Ike","JP","Tom","Cade"]');
+
+      function focusPartnerInput() {
+        document.getElementById('partnerInput').focus();
+      }
+
+      function onPartnerInput() {
+        const q = document.getElementById('partnerInput').value.trim().toLowerCase();
+        const dd = document.getElementById('partnerDd');
+        if (!q) {
+          dd.style.display = 'none';
+          return;
+        }
+        const matches = allPartners.filter(p => p.toLowerCase().includes(q) && !partners.includes(p));
+        dd.innerHTML = '';
+        matches.forEach(p => {
+          const el = document.createElement('div');
+          el.className = 'pdd-item';
+          el.textContent = p;
+          el.onclick = () => addPartner(p);
+          dd.appendChild(el);
+        });
+        if (!matches.find(m => m.toLowerCase() === q)) {
+          const el = document.createElement('div');
+          el.className = 'pdd-item';
+          el.textContent = `+ Add "${document.getElementById('partnerInput').value.trim()}"`;
+          el.onclick = () => addPartner(document.getElementById('partnerInput').value.trim());
+          dd.appendChild(el);
+        }
+        dd.style.display = dd.children.length ? 'block' : 'none';
+      }
+
+      function partnerKeydown(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          const v = document.getElementById('partnerInput').value.trim();
+          if (v) addPartner(v);
+        }
+        if (e.key === 'Backspace' && !document.getElementById('partnerInput').value && partners.length) {
+          partners.pop();
+          renderPartners();
+        }
+      }
+
+      function addPartner(name) {
+        if (!name || partners.includes(name)) return;
+        partners.push(name);
+        if (!allPartners.includes(name)) {
+          allPartners.push(name);
+          localStorage.setItem('golfPartners', JSON.stringify(allPartners));
+        }
+        document.getElementById('partnerInput').value = '';
+        document.getElementById('partnerDd').style.display = 'none';
+        renderPartners();
+      }
+
+      function removePartner(name) {
+        partners = partners.filter(p => p !== name);
+        renderPartners();
+      }
+
+      function renderPartners() {
+        const chips = document.getElementById('partnerChips');
+        const input = document.getElementById('partnerInput');
+        chips.innerHTML = '';
+        partners.forEach(p => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          chip.innerHTML = `${p}<span class="cx" onclick="removePartner('${p}')">×</span>`;
+          chips.appendChild(chip);
+        });
+        chips.appendChild(input);
+      }
+
+      // ── Date log ──
+      let dates = [];
+
+      function addDate() {
+        dates.push({
+          id: Date.now(),
+          date: '',
+          score: ''
+        });
+        renderDates();
+      }
+
+      function removeDate(id) {
+        dates = dates.filter(e => e.id !== id);
+        renderDates();
+      }
+
+      function renderDates() {
+        const el = document.getElementById('dLog');
+        el.innerHTML = '';
+        dates.forEach(e => {
+          const d = document.createElement('div');
+          d.className = 'dle';
+          d.innerHTML = `<input type="date" value="${e.date}" onchange="upd(${e.id},'date',this.value)"><input type="number" placeholder="Score" value="${e.score}" onchange="upd(${e.id},'score',this.value)"><button class="rb" onclick="removeDate(${e.id})">✕</button>`;
+          el.appendChild(d);
+        });
+      }
+
+      function upd(id, k, v) {
+        const e = dates.find(e => e.id === id);
+        if (e) e[k] = v;
+      }
+
+      // ── Scan ──
+      let sb64 = null,
+        sFile = null;
+
+      function handleFile(e) {
+        const f = e.target.files[0];
+        if (!f) return;
+        sFile = f;
+        const r = new FileReader();
+        r.onload = ev => {
+          sb64 = ev.target.result.split(',')[1];
+          document.getElementById('prevImg').src = ev.target.result;
+          document.getElementById('sprev').style.display = 'block';
+          document.getElementById('pBtn').style.display = 'block';
+        };
+        r.readAsDataURL(f);
+      }
+      async function parseCard() {
+        if (!sb64) return;
+        const btn = document.getElementById('pBtn'),
+          msg = document.getElementById('pMsg');
+        btn.disabled = true;
+        btn.textContent = 'Parsing...';
+        msg.style.color = 'var(--gold)';
+        msg.textContent = 'Reading...';
+        try {
+          const r = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-20250514",
+              max_tokens: 1000,
+              messages: [{
+                role: "user",
+                content: [{
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: sFile.type || 'image/jpeg',
+                    data: sb64
+                  }
+                }, {
+                  type: "text",
+                  text: `Read this golf scorecard. Return ONLY valid JSON: {"courseName":string_or_null,"par":number_or_null,"tees":[{"color":"Blue","originalName":string,"yards":number_or_null,"rating":number_or_null,"slope":number_or_null,"confidence":"high|medium|low"},{"color":"Black","originalName":string,"yards":number_or_null,"rating":number_or_null,"slope":number_or_null,"confidence":"high|medium|low"},{"color":"White","originalName":string,"yards":number_or_null,"rating":number_or_null,"slope":number_or_null,"confidence":"high|medium|low"}]}`
+                }]
+              }]
+            })
+          });
+          const d = await r.json();
+          const p = JSON.parse(d.content.filter(b => b.type === 'text').map(b => b.text).join('').replace(/```json|```/g, '').trim());
+          if (p.courseName) document.getElementById('cName').value = p.courseName;
+          if (p.par) document.getElementById('par').value = p.par;
+          let flags = 0,
+            filled = [];
+          p.tees && p.tees.forEach(t => {
+            const pr = t.color.toLowerCase(),
+              c = t.confidence || 'low';
+            if (c !== 'high') flags++;
+            const sf = (id, v, label) => {
+              const el = document.getElementById(id);
+              if (el && v != null) {
+                el.value = v;
+                el.classList.remove('ch-hi', 'ch-me', 'ch-lo');
+                el.classList.add(c === 'high' ? 'ch-hi' : c === 'medium' ? 'ch-me' : 'ch-lo');
+                filled.push({
+                  label,
+                  val: v,
+                  conf: c
+                });
+              } else filled.push({
+                label,
+                val: null,
+                conf: 'na'
+              });
+            };
+            sf(`${pr}Y`, t.yards, `${t.color} Yards`);
+            sf(`${pr}R`, t.rating, `${t.color} Rating`);
+            sf(`${pr}S`, t.slope, `${t.color} Slope`);
+            const ne = document.getElementById(`${pr}N`);
+            if (ne && t.originalName) ne.value = t.originalName;
+          });
+          const panel = document.getElementById('fillPanel');
+          document.querySelector('.fill-panel-title').textContent = flags ? `⚠ ${flags} field(s) need review` : '✓ High confidence';
+          document.getElementById('fillGrid').innerHTML = filled.map(f => `<div class="fill-item"><div class="fill-dot ${f.val!=null?f.conf:'na'}"></div><span class="fi-label">${f.label}:</span>${f.val!=null?`<span class="fi-val">${f.val}</span>`:`<span class="fi-empty">—</span>`}</div>`).join('');
+          panel.style.display = 'block';
+          msg.style.color = flags ? 'var(--warn)' : 'var(--ok)';
+          msg.textContent = flags ? `${flags} field(s) flagged` : '✓ All high confidence';
+        } catch (e) {
+          msg.style.color = 'var(--red)';
+          msg.textContent = '✗ Parse failed';
+        }
+        btn.disabled = false;
+        btn.textContent = 'Re-parse';
+      }
+
+      // ── Beli ──
+      let bTier = '',
+        bCourses = [],
+        bLo = 0,
+        bHi = 0,
+        bPlaces = [],
+        bName = '';
+
+      function startBeli() {
+        bName = document.getElementById('cName').value.trim();
+        bTier = document.getElementById('tierFull').value;
+        if (!bTier) {
+          alert('Select a tier first.');
+          return;
+        }
+        if (!bName) {
+          alert('Enter a course name first.');
+          return;
+        }
+        bCourses = PORTFOLIO.filter(c => c.tier === bTier);
+        if (!bCourses.length) {
+          alert(`No courses in ${bTier} yet.`);
+          return;
+        }
+        bLo = 0;
+        bHi = bCourses.length - 1;
+        bPlaces = [];
+        document.getElementById('bOv').classList.add('show');
+        renderBeli();
+      }
+
+      function renderBeli() {
+        const mid = Math.floor((bLo + bHi) / 2),
+          cc = bCourses[mid];
+        const total = Math.max(3, Math.ceil(Math.log2(bCourses.length + 1)));
+        let pips = '';
+        for (let i = 0; i < total; i++) pips += `<div class="bpip ${i<bPlaces.length?'done':''}"></div>`;
+        document.getElementById('bProg').innerHTML = pips;
+        document.getElementById('bCont').innerHTML = `
+    <div class="bq">Ranking in ${bTier} tier</div>
+    <div class="bn">${bName}</div>
+    <div class="bvs">How does it compare to...</div>
+    <div class="bcomp"><span>${cc.name}</span><span class="tbadge">#${cc.rank}</span></div>
+    <div class="bch">
+      <button class="bchoice pref" onclick="bAns('prefer',${mid})">✓ I prefer ${bName}</button>
+      <button class="bchoice less" onclick="bAns('less',${mid})">✗ I prefer ${cc.name}</button>
+      <button class="bchoice uns" onclick="bAns('close',${mid})">≈ Too close to call</button>
+      <button class="bchoice uns" onclick="bAns('unknown',${mid})">? I don't know</button>
+    </div>`;
+      }
+
+      function bAns(ans, mid) {
+        bPlaces.push({
+          mid,
+          ans
+        });
+        if (ans === 'prefer') bHi = mid - 1;
+        else if (ans === 'less') bLo = mid + 1;
+        else {
+          bLo = mid;
+          bHi = mid;
+        }
+        if (bLo > bHi || (bLo === bHi && bPlaces.length > 1)) {
+          const at = bLo;
+          const atTop = at === 0,
+            atBottom = at >= bCourses.length;
+          if (atTop || atBottom) {
+            showCrossTier(atTop);
+          } else {
+            showBeliResult(at);
+          }
+        } else renderBeli();
+      }
+
+      function showCrossTier(atTop) {
+        const idx = TIER_ORDER.indexOf(bTier);
+        const cross = atTop ? TIER_ORDER[idx - 1] : TIER_ORDER[idx + 1];
+        if (!cross) {
+          showBeliResult(atTop ? 0 : bCourses.length);
+          return;
+        }
+        const cc = PORTFOLIO.filter(c => c.tier === cross);
+        if (!cc.length) {
+          showBeliResult(atTop ? 0 : bCourses.length);
+          return;
+        }
+        const comp = atTop ? cc[cc.length - 1] : cc[0];
+        document.getElementById('bProg').innerHTML = '';
+        document.getElementById('bCont').innerHTML = `
+    <div class="bq" style="color:var(--warn);">Cross-tier check</div>
+    <div class="bn">${bName}</div>
+    <div class="bvs">Ranked ${atTop?'#1':'last'} in ${bTier}. Compare to ${cross}:</div>
+    <div class="bcomp"><span>${comp.name}</span><span class="tbadge">${cross}</span></div>
+    <div class="bch">
+      <button class="bchoice pref" onclick="moveTier('${cross}')">↑ Move to ${cross}</button>
+      <button class="bchoice less" onclick="showBeliResult(${atTop?0:bCourses.length})">✓ Keep in ${bTier}</button>
+    </div>`;
+      }
+
+      function moveTier(t) {
+        selTier(t[0]);
+        if (t.includes('C')) {
+          document.getElementById('tSubSel').value = t.split(' ')[0];
+          updTier();
+        }
+        bTier = t;
+        bCourses = PORTFOLIO.filter(c => c.tier === t);
+        bLo = 0;
+        bHi = bCourses.length - 1;
+        bPlaces = [];
+        renderBeli();
+      }
+
+      function showBeliResult(at) {
+        const above = at > 0 ? bCourses[at - 1] : null,
+          below = at < bCourses.length ? bCourses[at] : null;
+        document.getElementById('bProg').innerHTML = '';
+        document.getElementById('bCont').innerHTML = `
+    <div style="text-align:center;">
+      <div style="font-size:11px;letter-spacing:.12em;color:var(--cd);text-transform:uppercase;margin-bottom:10px;">Placement complete</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--gold);margin-bottom:18px;">${bName}</div>
+      <div class="bneigh">
+        ${above?`<div class="bni above">↑ ${above.name} <span style="font-size:10px;opacity:.7">#${above.rank}</span></div>`:`<div class="bni above" style="opacity:.4">↑ Top of ${bTier}</div>`}
+        <div class="bni new">★ ${bName} — placed here</div>
+        ${below?`<div class="bni below">↓ ${below.name} <span style="font-size:10px;opacity:.7">#${below.rank}</span></div>`:`<div class="bni below" style="opacity:.4">↓ Bottom of ${bTier}</div>`}
+      </div>
+      <button class="bdone" onclick="closeBeli()">✓ Confirmed</button>
+    </div>`;
+      }
+
+      function closeBeli() {
+        document.getElementById('bOv').classList.remove('show');
+      }
+      // ── OAuth + push ──
+      // getAccessToken: checks sessionStorage cache first; if expired/missing,
+      // opens the OAuth popup. Implicit-flow tokens last 1 hour, and we honour
+      // the `expires_in` returned by Google rather than assuming.
+      async function getAccessToken() {
+        const cached = getCachedToken();
+        if (cached) { accessToken = cached; return cached; }
+        return new Promise((resolve, reject) => {
+          const params = new URLSearchParams({
+            client_id: CLIENT_ID,
+            redirect_uri: 'https://reidgolf.netlify.app',
+            response_type: 'token',
+            scope: SCOPE,
+            prompt: 'consent'
+          });
+          const popup = window.open(`https://accounts.google.com/o/oauth2/v2/auth?${params}`, 'oauth', 'width=500,height=600,left=200,top=100');
+          const timer = setInterval(() => {
+            try {
+              const url = popup.location.href;
+              if (url.includes('access_token')) {
+                clearInterval(timer);
+                popup.close();
+                const hash = new URLSearchParams(url.split('#')[1]);
+                const token = hash.get('access_token');
+                const expiresIn = parseInt(hash.get('expires_in') || '3600');
+                if (token) {
+                  accessToken = token;
+                  setCachedToken(token, expiresIn);
+                  resolve(token);
+                } else reject('No token');
+              }
+              if (popup.closed) {
+                clearInterval(timer);
+                reject('Popup closed');
+              }
+            } catch (e) {}
+          }, 300);
+        });
+      }
+
+      // Build the 31-column Rankings rollup row (A..AE).
+      // Columns 1-29 unchanged from Phase 1; columns 30-31 are courseId + par.
+      function buildRow() {
+        const name = document.getElementById('cName').value.trim();
+        const isNew = document.getElementById('newCourseChk').checked;
+        const tier = isNew ? document.getElementById('tierFull').value : (currentPortfolioEntry?.tier || '');
+        const alias = document.getElementById('cAlias')?.value.trim() || '';
+        const sub = document.getElementById('cSub')?.value.trim() || '';
+        const bN = document.getElementById('blueN')?.value.trim() || '',
+          kkN = document.getElementById('blackN')?.value.trim() || '',
+          wN = document.getElementById('whiteN')?.value.trim() || '';
+        const teeNotes = [bN && `Blue=${bN}`, kkN && `Black=${kkN}`, wN && `White=${wN}`].filter(Boolean).join('. ') || '';
+        const eag = document.getElementById('eagle').value.trim();
+        const eagStr = eag && eag.toLowerCase() !== 'no' && eag ? `Eagle (Hole ${eag})` : '';
+        const bird = document.getElementById('birdies').value;
+        const stats = [eagStr, bird && `Most Birdies: ${bird}`].filter(Boolean).join('. ');
+        const todayDate = document.getElementById('roundDate').value;
+        const allDates = dates.map(e => e.date).filter(Boolean);
+        if (todayDate) allDates.push(todayDate);
+        allDates.sort();
+        const allScores = dates.map(e => parseInt(e.score)).filter(n => !isNaN(n));
+        const curScore = parseInt(document.getElementById('recScore').value);
+        if (!isNaN(curScore)) allScores.push(curScore);
+        const avg = allScores.length ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1) : '';
+        const goodPace = document.getElementById('goodPace')?.checked;
+        const badPace = document.getElementById('pace')?.checked;
+        const paceVal = badPace ? 'Bad' : goodPace ? 'Good' : '';
+        const greens = document.getElementById('greensVal').value;
+        const value = document.getElementById('valueVal').value;
+        const tees = document.getElementById('teesPlayed').value;
+        const fullName = sub ? `${name} (${sub})` : alias ? `${name} / ${alias}` : name;
+        // Phase 2: stable courseId — reuse if existing, generate-with-collision-suffix if new.
+        const courseId = currentPortfolioEntry?.courseId || generateUniqueCourseId(name);
+        const par = document.getElementById('par').value || '';
+        // When upserting, preserve existing tee data if the user didn't re-enter it.
+        const tee = (id) => document.getElementById(id)?.value || (currentPortfolioEntry ? '' : '');
+        let blueY = tee('blueY') || (currentPortfolioEntry?.tees?.blue?.y ?? '');
+        let blueR = tee('blueR') || (currentPortfolioEntry?.tees?.blue?.r ?? '');
+        let blueS = tee('blueS') || (currentPortfolioEntry?.tees?.blue?.s ?? '');
+        let blkY  = tee('blackY') || (currentPortfolioEntry?.tees?.black?.y ?? '');
+        let blkR  = tee('blackR') || (currentPortfolioEntry?.tees?.black?.r ?? '');
+        let blkS  = tee('blackS') || (currentPortfolioEntry?.tees?.black?.s ?? '');
+        let whtY  = tee('whiteY') || (currentPortfolioEntry?.tees?.white?.y ?? '');
+        let whtR  = tee('whiteR') || (currentPortfolioEntry?.tees?.white?.r ?? '');
+        let whtS  = tee('whiteS') || (currentPortfolioEntry?.tees?.white?.s ?? '');
+
+        // Phase 2: backfill tee rating/slope for the tee played, if the user
+        // manually entered them this round and the stored cell was empty.
+        // Combos are intentionally excluded (no single-tee column to store to).
+        const ratingUsed = document.getElementById('ratingUsed')?.value;
+        const slopeUsed  = document.getElementById('slopeUsed')?.value;
+        const teesLbl    = (tees || '').toLowerCase();
+        const isCombo    = teesLbl.includes('combo');
+        if (!isCombo && ratingUsed && slopeUsed) {
+          if (teesLbl.includes('blue')) {
+            if (!blueR) blueR = ratingUsed;
+            if (!blueS) blueS = slopeUsed;
+          } else if (teesLbl.includes('black')) {
+            if (!blkR) blkR = ratingUsed;
+            if (!blkS) blkS = slopeUsed;
+          } else if (teesLbl.includes('white')) {
+            if (!whtR) whtR = ratingUsed;
+            if (!whtS) whtS = slopeUsed;
+          }
+        }
+        return ['', fullName, tier,
+          document.getElementById('rounds').value || '', buildRec(),
+          blueY, blueR, blueS,
+          blkY,  blkR,  blkS,
+          whtY,  whtR,  whtS,
+          teeNotes, document.getElementById('views')?.value || '', stats,
+          document.getElementById('grass')?.checked ? 'Yes' : 'No',
+          document.getElementById('oki')?.checked ? 'Yes' : 'No',
+          document.getElementById('priv')?.checked ? 'Yes' : 'No',
+          paceVal, document.getElementById('notes')?.value.trim() || '',
+          allDates[0] || '', allDates[allDates.length - 1] || '', avg,
+          tees, greens > 0 ? `${greens}/5` : '', value > 0 ? `${value}/5` : '', partners.join(', '),
+          courseId, par
+        ];
+      }
+
+      // Build all Round History rows for this submit — one per dated entry,
+      // including the "today" round and each previous-round entry in dates[].
+      // Each row matches the 17-column Round History schema.
+      function buildRoundHistoryRows() {
+        const name        = document.getElementById('cName').value.trim();
+        const courseId    = currentPortfolioEntry?.courseId || generateUniqueCourseId(name);
+        const submittedAt = new Date().toISOString();
+        const teesPlayed  = document.getElementById('teesPlayed').value;
+        const rating      = parseFloat(document.getElementById('ratingUsed')?.value);
+        const slope       = parseInt(document.getElementById('slopeUsed')?.value);
+        const holesPlayed = parseInt(document.getElementById('holesPlayed')?.value) || 18;
+        const partnersStr = partners.join(', ');
+        const birdies     = parseInt(document.getElementById('birdies').value) || 0;
+        const eagRaw      = document.getElementById('eagle').value.trim();
+        const eagleHole   = (eagRaw && eagRaw.toLowerCase() !== 'no') ? eagRaw : '';
+        const roundNotes  = document.getElementById('notes')?.value.trim() || '';
+
+        const rows = [];
+
+        // "Today" round
+        const todayScore = parseInt(document.getElementById('recScore').value);
+        const todayDate  = document.getElementById('roundDate').value;
+        if (todayDate && !isNaN(todayScore)) {
+          const epoch = Date.parse(todayDate) || Date.now();
+          const diff = computeDifferential(
+            todayScore,
+            isNaN(rating) ? null : rating,
+            isNaN(slope)  ? null : slope
+          );
+          rows.push([
+            `${courseId}-${epoch}`,                 // roundId
+            todayDate,                              // playedAt
+            submittedAt,                            // submittedAt
+            courseId,                               // courseId
+            name,                                   // courseName
+            holesPlayed,                            // holesPlayed
+            todayScore,                             // strokes
+            todayScore,                             // score (= strokes for now)
+            '',                                     // holeStrokes
+            teesPlayed,                             // teesPlayed
+            isNaN(rating) ? '' : rating,            // rating
+            isNaN(slope)  ? '' : slope,             // slope
+            diff != null ? diff : '',               // differential
+            partnersStr,                            // partners
+            roundNotes,                             // notes
+            birdies,                                // birdies
+            eagleHole                               // eagleHole
+          ]);
+        }
+
+        // Previous rounds from the "Past Rounds Log" entries.
+        // These are intentionally minimal — historical data the user backfilled,
+        // so we don't claim tees/rating/slope/partners that weren't recorded.
+        dates.forEach(e => {
+          const sc = parseInt(e.score);
+          if (!e.date || isNaN(sc)) return;
+          const epoch = Date.parse(e.date) || Date.now();
+          rows.push([
+            `${courseId}-${epoch}`,
+            e.date,
+            submittedAt,
+            courseId,
+            name,
+            18,        // assume 18 unless we add a per-entry holesPlayed input later
+            sc,        // strokes
+            sc,        // score
+            '',        // holeStrokes
+            '',        // teesPlayed unknown for backfill
+            '',        // rating unknown
+            '',        // slope unknown
+            '',        // differential N/A
+            '',        // partners unknown
+            '',        // notes
+            0,
+            ''
+          ]);
+        });
+
+        return rows;
+      }
+
+      async function doSubmit() {
+        const btn = document.getElementById('subBtn');
+        const name = document.getElementById('cName').value.trim();
+        if (!name) { showMsg('err', 'Course name is required.'); return; }
+
+        // Par is required (either the existing course already has it, or the
+        // user has to enter it now). This implements the "prompt when blank" rule.
+        const parVal = document.getElementById('par').value.trim();
+        if (!parVal) { showMsg('err', 'Par is required for this course — please enter it.'); document.getElementById('par').focus(); return; }
+
+        btn.disabled = true;
+        showMsg('load', 'Connecting to Google...');
+        try {
+          if (!accessToken) await getAccessToken();
+
+          // Build artefacts before any network call so we fail-fast on form errors.
+          const rollupRow      = buildRow();
+          const courseId       = rollupRow[29]; // col AD (0-indexed)
+          const historyRows    = buildRoundHistoryRows();
+
+          // 1. Upsert the Rankings rollup row (update if existing courseId, else append).
+          showMsg('load', 'Updating Rankings...');
+          const upsertResult = await upsertRankingsRow(rollupRow, courseId);
+
+          // 2. Append Round History rows (one per dated entry).
+          if (historyRows.length) {
+            showMsg('load', `Logging ${historyRows.length} round${historyRows.length === 1 ? '' : 's'}...`);
+            await appendRoundHistory(historyRows);
+          }
+
+          // 3. Refresh in-memory PORTFOLIO so subsequent submits in the same session
+          //    see the new state (no full page reload required).
+          try { await loadPortfolio(); } catch (e) { console.warn('Portfolio reload failed:', e); }
+
+          const verb = upsertResult.action === 'updated' ? 'updated' : 'added';
+          const msg = `✓ Rankings row ${verb}. ${historyRows.length} round${historyRows.length===1?'':'s'} written to Round History.\n\nRun the Apps Script to re-sort & re-color when convenient.`;
+          showMsg('ok', msg);
+        } catch (err) {
+          if (err === 'Popup closed') {
+            showMsg('err', 'Sign-in cancelled.');
+          } else if (err.message === 'Auth expired') {
+            showMsg('err', 'Sign-in expired. Tap submit again to re-authenticate.');
+          } else {
+            showMsg('err', `Error: ${err.message||err}\n\nTap submit again to retry.`);
+          }
+        }
+        btn.disabled = false;
+      }
+
+      function showMsg(t, txt) {
+        const el = document.getElementById('sMsg');
+        el.className = 'smsg ' + t;
+        el.textContent = txt;
+        el.style.display = 'block';
+      }
+
+      // ── Script ──
+      let sOpen = false;
+
+      function togScript() {
+        sOpen = !sOpen;
+        document.getElementById('sBox').style.display = sOpen ? 'block' : 'none';
+        document.getElementById('cBtn').style.display = sOpen ? 'block' : 'none';
+        document.getElementById('sArr').textContent = sOpen ? '▲' : '▼';
+      }
+
+      function copyScript() {
+        navigator.clipboard.writeText(document.getElementById('sBox').innerText).then(() => {
+          const b = document.getElementById('cBtn');
+          b.textContent = '✓ Copied!';
+          b.classList.add('copied');
+          setTimeout(() => {
+            b.textContent = 'Copy Script';
+            b.classList.remove('copied');
+          }, 2500);
+        });
+      }
+
+      // ── Init ──
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.sw')) hideSR();
+        if (!e.target.closest('.partner-wrap')) document.getElementById('partnerDd').style.display = 'none';
+      });
+      // Auto-set today's date
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('roundDate').value = today;
+
+      // Phase 2: warm PORTFOLIO in the background. If the user has a cached
+      // token in sessionStorage this is silent and fast; otherwise it will
+      // queue auth on the first Rankings-tab open or first submit.
+      (async function warmPortfolio() {
+        if (!getCachedToken()) return; // defer auth to first user action
+        try {
+          await loadPortfolio();
+          // If the Rankings tab is currently active, re-render with fresh data.
+          const rankingsActive = document.getElementById('page-rankings')?.classList.contains('active');
+          if (rankingsActive) renderRankings(PORTFOLIO);
+        } catch (err) {
+          console.warn('Background portfolio load failed (will retry on user action):', err);
+        }
+      })();
+
+    </script>
+</body>
+
+</html>
