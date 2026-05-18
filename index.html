@@ -1613,8 +1613,11 @@
 
           <!-- NEW COURSE EXTRA FIELDS — hidden unless new course checked -->
           <div class="new-course-fields" id="newCourseFields">
-            <div class="f"><label>Also known as / Formerly</label><input type="text" id="cAlias" placeholder="e.g. North Shore Golf Course"></div>
-            <div class="f"><label>Sub-course / Stretch</label><input type="text" id="cSub" placeholder="e.g. Coal Creek, Coyote Creek, South 9"></div>
+            <!-- aka and sub-course removed from UI per user request (applied to <3 courses
+                 historically). Hidden inputs retained so buildRow() and the autocomplete
+                 keep working without code branches. -->
+            <input type="hidden" id="cAlias" value="">
+            <input type="hidden" id="cSub" value="">
             <div class="f">
               <label>Tier</label>
               <div class="tier-row">
@@ -1677,10 +1680,23 @@
           <div class="r2">
             <div class="f">
               <label>Score <span class="ref" id="pbLabel"></span></label>
-              <input type="number" id="recScore" placeholder="82" oninput="updRec()">
+              <input type="number" id="recScore" placeholder="82" oninput="updRec(); updateDifferentialLive();">
             </div>
             <div class="f"><label>To Par</label>
               <div class="rl" id="recLive">—</div>
+            </div>
+          </div>
+          <div class="r2">
+            <div class="f">
+              <label>Holes Played</label>
+              <select id="holesPlayed">
+                <option value="18" selected>18</option>
+                <option value="9">9</option>
+              </select>
+            </div>
+            <div class="f">
+              <label>Differential <span class="ref">USGA</span></label>
+              <div class="rl" id="diffLive">—</div>
             </div>
           </div>
           <div class="r2">
@@ -1695,7 +1711,7 @@
           </div>
           <div class="f">
             <label>Tees Played</label>
-            <select id="teesPlayed">
+            <select id="teesPlayed" onchange="autoFillRatingSlope()">
               <option value="">— Select —</option>
               <option value="Black (Tips)">Black (Tips)</option>
               <option value="Blue">Blue</option>
@@ -1703,6 +1719,16 @@
               <option value="Black / Blue combo">Black / Blue combo</option>
               <option value="Blue / White combo">Blue / White combo</option>
             </select>
+          </div>
+          <div class="r2">
+            <div class="f">
+              <label>Rating Used <span class="ref">auto</span></label>
+              <input type="number" id="ratingUsed" step="0.1" min="55" max="80" placeholder="72.8" oninput="updateDifferentialLive()">
+            </div>
+            <div class="f">
+              <label>Slope Used <span class="ref">auto</span></label>
+              <input type="number" id="slopeUsed" min="55" max="155" placeholder="132" oninput="updateDifferentialLive()">
+            </div>
           </div>
           <div class="f">
             <label>Greens Quality <span class="ref" id="greensRef"></span></label>
@@ -1819,7 +1845,13 @@
       const CLIENT_ID = '390848816796-rca0q7tnuprhbrtfc9odqm3ibfr7brr5.apps.googleusercontent.com';
       const SHEET_ID = '147bYNkEYPrC_GnqZZ7jLGW0FORHq--TZFwZ09Sh6mwg';
       const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+      const RANKINGS_RANGE = 'Rankings!A2:AE200'; // 31 columns: A..AE
+      const RANKINGS_COURSEID_RANGE = 'Rankings!AD2:AD200'; // for upsert lookup
+      const ROUND_HISTORY_APPEND_RANGE = 'Round History!A:Q'; // 17 columns
+      const TOKEN_KEY = 'golfToken';
+      const TOKEN_EXPIRY_KEY = 'golfTokenExpiry';
       let accessToken = null;
+      let currentPortfolioEntry = null; // set when user picks an existing course
 
       // ── Tier config ──
       const TIER_ORDER = ["S", "A", "B", "High C", "Mid C", "Low C", "D", "E", "F"];
@@ -1846,882 +1878,229 @@
         "F": "#fff"
       };
 
-      // ── Portfolio (for search + Beli) ──
-      const PORTFOLIO = [{
-          rank: 1,
-          name: "Sahalee Country Club",
-          tier: "S",
+      // ── Portfolio (loaded from sheet at app start) ──
+      // Shape per entry: { rank, name, tier, courseId, par, rounds, pb, mostBirdies,
+      //   eagles, greens, value, tees: { blue|black|white: {y,r,s} },
+      //   aliases, subs, notes, partners, … }
+      let PORTFOLIO = [];
+
+      // ── Phase 2: sessionStorage token cache ──
+      function getCachedToken() {
+        const t = sessionStorage.getItem(TOKEN_KEY);
+        const exp = parseInt(sessionStorage.getItem(TOKEN_EXPIRY_KEY) || '0');
+        if (t && Date.now() < exp - 60000) return t;
+        return null;
+      }
+      function setCachedToken(t, expiresInSec) {
+        sessionStorage.setItem(TOKEN_KEY, t);
+        sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + (expiresInSec || 3600) * 1000));
+      }
+      function clearCachedToken() {
+        sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+        accessToken = null;
+      }
+
+      // ── Phase 2: parse a sheet row into a PORTFOLIO entry ──
+      function numOrNull(v) {
+        if (v === '' || v == null) return null;
+        const n = parseFloat(v);
+        return isNaN(n) ? null : n;
+      }
+      function parseStatsCell(s) {
+        s = s || '';
+        const mb = s.match(/Most Birdies:\s*(\d+)/i);
+        const eg = s.match(/Eagle\s*\(Hole\s*([^)]+)\)/i);
+        return {
+          mostBirdies: mb ? parseInt(mb[1]) : 0,
+          eagles: eg ? [eg[1].trim()] : []
+        };
+      }
+      function parsePortfolioRow(r) {
+        // Column index map (0-based) — matches Apps Script COL constants minus 1:
+        // 0=rank, 1=name, 2=tier, 3=rounds, 4=record, 5-7=blueYRS, 8-10=blackYRS,
+        // 11-13=whiteYRS, 14=teeNotes, 15=views, 16=stats, 17=grass, 18=oki,
+        // 19=private, 20=pace, 21=notes, 22=firstPlayed, 23=lastPlayed,
+        // 24=avgScore, 25=teesPlayed, 26=greens, 27=value, 28=partners,
+        // 29=courseId, 30=par
+        const stats = parseStatsCell(r[16]);
+        const recM = (r[4] || '').toString().match(/(\d+)\s*\(/);
+        const grM = (r[26] || '').toString().match(/(\d+)/);
+        const vlM = (r[27] || '').toString().match(/(\d+)/);
+        return {
+          rank: parseInt(r[0]) || 0,
+          name: (r[1] || '').toString().trim(),
+          tier: (r[2] || '').toString().trim(),
+          rounds: parseInt(r[3]) || 0,
+          record: r[4] || '',
+          pb: recM ? parseInt(recM[1]) : null,
+          mostBirdies: stats.mostBirdies,
+          eagles: stats.eagles,
+          tees: {
+            blue:  { y: numOrNull(r[5]),  r: numOrNull(r[6]),  s: numOrNull(r[7])  },
+            black: { y: numOrNull(r[8]),  r: numOrNull(r[9]),  s: numOrNull(r[10]) },
+            white: { y: numOrNull(r[11]), r: numOrNull(r[12]), s: numOrNull(r[13]) }
+          },
+          teeNotes: r[14] || '',
+          views: r[15] || '',
+          grass: r[17] || '',
+          oki: r[18] || '',
+          private: r[19] || '',
+          pace: r[20] || '',
+          notes: r[21] || '',
+          firstPlayed: r[22] || '',
+          lastPlayed: r[23] || '',
+          avgScore: r[24] || '',
+          teesPlayed: r[25] || '',
+          greens: grM ? parseInt(grM[1]) : 0,
+          value: vlM ? parseInt(vlM[1]) : 0,
+          partners: r[28] || '',
+          courseId: (r[29] || '').toString().trim(),
+          par: r[30] !== '' && r[30] != null ? parseInt(r[30]) : null,
+          // Aliases & subs aren't currently persisted to the sheet — default empty.
           aliases: [],
-          subs: ["North Course", "South Course"],
-          rounds: 1,
-          pb: 87,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 2,
-          name: "Chambers Bay",
-          tier: "S",
-          aliases: [],
-          subs: [],
-          rounds: 2,
-          pb: 96,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 3,
-          name: "St Ives Country Club",
-          tier: "S",
-          aliases: [],
-          subs: [],
-          rounds: 2,
-          pb: 85,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 4,
-          name: "The Golf Club at Newcastle (Coal Creek)",
-          tier: "S",
-          aliases: ["Newcastle Coal Creek"],
-          subs: ["Coal Creek", "China Creek"],
-          rounds: 6,
-          pb: 80,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 5,
-          name: "White Horse Golf Club",
-          tier: "S",
-          aliases: [],
-          subs: [],
-          rounds: 4,
-          pb: 80,
-          par: 72,
-          mostBirdies: 3,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 6,
-          name: "Gold Mountain Golf Club (Olympic)",
-          tier: "S",
-          aliases: ["Gold Mountain Olympic"],
-          subs: ["Olympic Course", "Cascade Course"],
-          rounds: 3,
-          pb: 85,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 7,
-          name: "The Plateau Club",
-          tier: "S",
-          aliases: [],
-          subs: [],
-          rounds: 1,
-          pb: 87,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 8,
-          name: "The Home Course",
-          tier: "A",
-          aliases: [],
-          subs: [],
-          rounds: 2,
-          pb: 83,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 9,
-          name: "Trophy Lake Golf & Casting Club",
-          tier: "A",
-          aliases: ["Trophy Lake"],
-          subs: [],
-          rounds: 2,
-          pb: 82,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [18],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 10,
-          name: "The Creek at Qualchan",
-          tier: "A",
-          aliases: ["Qualchan"],
-          subs: [],
-          rounds: 1,
-          pb: 75,
-          par: 72,
-          mostBirdies: 4,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 11,
-          name: "The Windermere Club",
-          tier: "A",
-          aliases: ["Windermere"],
-          subs: [],
-          rounds: 1,
-          pb: 72,
-          par: 72,
-          mostBirdies: 3,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 12,
-          name: "Washington National Golf Club",
-          tier: "B",
-          aliases: ["Washington National"],
-          subs: [],
-          rounds: 6,
-          pb: 82,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 13,
-          name: "Druids Glen Golf Club",
-          tier: "B",
-          aliases: ["Druids Glen"],
-          subs: [],
-          rounds: 2,
-          pb: 83,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 14,
-          name: "Links Golf Club (Post Falls ID)",
-          tier: "B",
-          aliases: ["The Links Post Falls"],
-          subs: [],
-          rounds: 1,
-          pb: 90,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 15,
-          name: "RMG Club @ Oakbrook",
-          tier: "B",
-          aliases: ["Oakbrook"],
-          subs: [],
-          rounds: 1,
-          pb: 86,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 16,
-          name: "The Golf Club at Redmond Ridge",
-          tier: "B",
-          aliases: ["Redmond Ridge"],
-          subs: [],
-          rounds: 7,
-          pb: 78,
-          par: 70,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 17,
-          name: "Indian Canyon Golf Course",
-          tier: "B",
-          aliases: ["Indian Canyon"],
-          subs: [],
-          rounds: 1,
-          pb: 88,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 18,
-          name: "Indian Summer Golf & Country Club",
-          tier: "B",
-          aliases: ["Indian Summer"],
-          subs: [],
-          rounds: 2,
-          pb: 89,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 19,
-          name: "Rocky River Golf Course",
-          tier: "B",
-          aliases: ["Rocky River"],
-          subs: [],
-          rounds: 1,
-          pb: 84,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 20,
-          name: "The Legacy Golf Course",
-          tier: "B",
-          aliases: ["Legacy Golf"],
-          subs: [],
-          rounds: 1,
-          pb: 86,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 21,
-          name: "Bobby Jones Golf Club",
-          tier: "B",
-          aliases: ["Bobby Jones Atlanta"],
-          subs: [],
-          rounds: 1,
-          pb: 42,
-          par: null,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 22,
-          name: "Warrior Golf Club",
-          tier: "B",
-          aliases: ["Warrior Golf"],
-          subs: [],
-          rounds: 1,
-          pb: 79,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [17],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 23,
-          name: "Walter Hall Memorial Golf Course",
-          tier: "High C",
-          aliases: ["Walter Hall"],
-          subs: [],
-          rounds: 4,
-          pb: 83,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [1],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 24,
-          name: "Tapps Island Golf Course",
-          tier: "High C",
-          aliases: ["Tapps Island"],
-          subs: [],
-          rounds: 2,
-          pb: 84,
-          par: null,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 25,
-          name: "The Blue Heron Golf Course",
-          tier: "High C",
-          aliases: ["Blue Heron"],
-          subs: [],
-          rounds: 8,
-          pb: 73,
-          par: 72,
-          mostBirdies: 5,
-          eagles: [1],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 26,
-          name: "Tahoma Valley Golf and Country Club",
-          tier: "High C",
-          aliases: ["Tahoma Valley"],
-          subs: [],
-          rounds: 1,
-          pb: 83,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [1],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 27,
-          name: "West Seattle Golf Course",
-          tier: "Mid C",
-          aliases: ["West Seattle"],
-          subs: [],
-          rounds: 5,
-          pb: 85,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 28,
-          name: "Willows Run Golf Club (Coyote Creek)",
-          tier: "Mid C",
-          aliases: ["Willows Run Coyote", "Coyote Creek"],
-          subs: ["Coyote Creek", "Eagle's Talon"],
-          rounds: 15,
-          pb: 79,
-          par: 72,
-          mostBirdies: 3,
-          eagles: [1],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 29,
-          name: "The Classic Golf Club",
-          tier: "Mid C",
-          aliases: ["The Classic"],
-          subs: [],
-          rounds: 1,
-          pb: 85,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 30,
-          name: "Lake Spanaway Golf Course",
-          tier: "Mid C",
-          aliases: ["Lake Spanaway"],
-          subs: [],
-          rounds: 2,
-          pb: 81,
-          par: 72,
-          mostBirdies: 3,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 31,
-          name: "Snoqualmie Falls Golf Course",
-          tier: "Low C",
-          aliases: ["Snoqualmie Falls"],
-          subs: [],
-          rounds: 4,
-          pb: 74,
-          par: 71,
-          mostBirdies: 3,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 32,
-          name: "Willows Run (Eagle's Talon)",
-          tier: "Low C",
-          aliases: ["Eagles Talon", "Eagle's Talon"],
-          subs: ["Coyote Creek", "Eagle's Talon"],
-          rounds: 5,
-          pb: 82,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [1],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 33,
-          name: "Maplewood Golf Course",
-          tier: "Low C",
-          aliases: ["Maplewood"],
-          subs: [],
-          rounds: 2,
-          pb: 86,
-          par: 71,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 34,
-          name: "Battle Creek Golf Course",
-          tier: "Low C",
-          aliases: ["Battle Creek"],
-          subs: [],
-          rounds: 1,
-          pb: 81,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 35,
-          name: "Legion Memorial Golf Course",
-          tier: "Low C",
-          aliases: ["Legion Memorial"],
-          subs: [],
-          rounds: 1,
-          pb: 84,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 36,
-          name: "Coeur D'Alene Golf Club",
-          tier: "Low C",
-          aliases: ["Coeur d'Alene GC"],
-          subs: [],
-          rounds: 1,
-          pb: 85,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 37,
-          name: "Northwoods Golf Club",
-          tier: "Low C",
-          aliases: ["Northwoods"],
-          subs: [],
-          rounds: 1,
-          pb: 88,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 38,
-          name: "Five Oaks Golf & Country Club",
-          tier: "Low C",
-          aliases: ["Five Oaks"],
-          subs: [],
-          rounds: 1,
-          pb: 83,
-          par: 72,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 39,
-          name: "Cedar Irons Golf Course",
-          tier: "Low C",
-          aliases: ["North Shore Golf Course", "North Shore", "Cedar Irons"],
-          subs: [],
-          rounds: 0,
-          pb: null,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 40,
-          name: "Harbour Pointe Golf Club",
-          tier: "D",
-          aliases: ["Harbour Pointe"],
-          subs: [],
-          rounds: 4,
-          pb: 89,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 41,
-          name: "Mount Si Golf Course",
-          tier: "D",
-          aliases: ["Mount Si"],
-          subs: [],
-          rounds: 1,
-          pb: 82,
-          par: 70,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 42,
-          name: "Jefferson Park Golf Course",
-          tier: "D",
-          aliases: ["Jefferson Park"],
-          subs: [],
-          rounds: 19,
-          pb: 79,
-          par: 70,
-          mostBirdies: 3,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 43,
-          name: "Echo Falls Golf Club",
-          tier: "D",
-          aliases: ["Echo Falls"],
-          subs: [],
-          rounds: 1,
-          pb: 81,
-          par: 70,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 44,
-          name: "The Golf Club at Hawks Prairie (Woodlands)",
-          tier: "D",
-          aliases: ["Hawks Prairie Woodlands"],
-          subs: ["Woodlands", "Links"],
-          rounds: 3,
-          pb: 84,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 45,
-          name: "The Golf Club at Hawks Prairie (Links)",
-          tier: "D",
-          aliases: ["Hawks Prairie Links"],
-          subs: ["Woodlands", "Links"],
-          rounds: 1,
-          pb: null,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 46,
-          name: "High Cedars Golf Club",
-          tier: "D",
-          aliases: ["High Cedars"],
-          subs: [],
-          rounds: 1,
-          pb: 84,
-          par: 71,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 47,
-          name: "Lake Wilderness Golf Course",
-          tier: "D",
-          aliases: ["Lake Wilderness"],
-          subs: [],
-          rounds: 1,
-          pb: 78,
-          par: 71,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 48,
-          name: "Enumclaw Golf Club",
-          tier: "D",
-          aliases: ["Enumclaw"],
-          subs: [],
-          rounds: 1,
-          pb: 83,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 49,
-          name: "Riverbend Golf Complex",
-          tier: "D",
-          aliases: ["Riverbend"],
-          subs: [],
-          rounds: 1,
-          pb: 87,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 50,
-          name: "Charles T Myers Golf Course",
-          tier: "D",
-          aliases: ["Charles T Myers", "CT Myers"],
-          subs: [],
-          rounds: 1,
-          pb: 82,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 51,
-          name: "Snohomish Golf Club",
-          tier: "D",
-          aliases: ["Snohomish"],
-          subs: [],
-          rounds: 2,
-          pb: 88,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 52,
-          name: "Cedarcrest Golf Course",
-          tier: "D",
-          aliases: ["Cedarcrest"],
-          subs: [],
-          rounds: 1,
-          pb: null,
-          par: 70,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 53,
-          name: "Auburn Golf Course",
-          tier: "E",
-          aliases: ["Auburn Golf"],
-          subs: [],
-          rounds: 1,
-          pb: null,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 54,
-          name: "Gleneagle Golf Course",
-          tier: "E",
-          aliases: ["Gleneagle"],
-          subs: [],
-          rounds: 1,
-          pb: 91,
-          par: 70,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 55,
-          name: "City of Lynnwood Municipal Golf Course",
-          tier: "E",
-          aliases: ["Lynnwood Municipal", "Lynnwood Golf"],
-          subs: [],
-          rounds: 1,
-          pb: 81,
-          par: 70,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 56,
-          name: "Interbay Golf Center",
-          tier: "E",
-          aliases: ["Interbay"],
-          subs: [],
-          rounds: 16,
-          pb: null,
-          par: null,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 57,
-          name: "Nile Shrine Golf Center",
-          tier: "F",
-          aliases: ["Nile Shrine"],
-          subs: [],
-          rounds: 1,
-          pb: 74,
-          par: 71,
-          mostBirdies: 4,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 58,
-          name: "Jackson Park Golf Course",
-          tier: "F",
-          aliases: ["Jackson Park"],
-          subs: [],
-          rounds: 2,
-          pb: 95,
-          par: 70,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 59,
-          name: "Bellevue Golf Course",
-          tier: "F",
-          aliases: ["Bellevue Golf"],
-          subs: [],
-          rounds: 2,
-          pb: 85,
-          par: 71,
-          mostBirdies: 2,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 60,
-          name: "Twin Rivers Golf Course",
-          tier: "F",
-          aliases: ["Twin Rivers"],
-          subs: [],
-          rounds: 1,
-          pb: 85,
-          par: 72,
-          mostBirdies: 1,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 61,
-          name: "Foster Golf Links",
-          tier: "F",
-          aliases: ["Foster Golf"],
-          subs: [],
-          rounds: 1,
-          pb: null,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
-        },
-        {
-          rank: 62,
-          name: "Riverside Golf Course",
-          tier: "F",
-          aliases: ["Riverside Golf"],
-          subs: [],
-          rounds: 1,
-          pb: null,
-          par: 72,
-          mostBirdies: 0,
-          eagles: [],
-          greens: 0,
-          value: 0
+          subs: []
+        };
+      }
+      function rowsToPortfolio(rows) {
+        return (rows || []).filter(r => r && r[1]).map(parsePortfolioRow);
+      }
+
+      // ── Phase 2: load PORTFOLIO from the Rankings tab ──
+      async function loadPortfolio() {
+        try {
+          if (!accessToken) await getAccessToken();
+          const resp = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANKINGS_RANGE)}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+          if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || 'Sheet read failed'); }
+          const data = await resp.json();
+          PORTFOLIO = rowsToPortfolio(data.values || []);
+          return PORTFOLIO;
+        } catch (err) {
+          console.error('loadPortfolio failed:', err);
+          throw err;
         }
-      ];
+      }
+
+      // ── Phase 2: slugify (mirrors Apps Script slugify) ──
+      function slugify(name) {
+        return (name || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+      function generateUniqueCourseId(name) {
+        const base = slugify(name);
+        const existing = new Set(PORTFOLIO.map(p => p.courseId).filter(Boolean));
+        let candidate = base, n = 2;
+        while (existing.has(candidate)) { candidate = `${base}-${n}`; n++; }
+        return candidate;
+      }
+
+      // ── Phase 2: USGA differential ──
+      // Formula: (score - rating) * 113 / slope, rounded to 1 dp.
+      // Returns null if any input is missing or slope is out of the legal range.
+      function computeDifferential(score, rating, slope) {
+        if (score == null || rating == null || slope == null) return null;
+        if (slope < 55 || slope > 155) return null;
+        const raw = ((score - rating) * 113) / slope;
+        return Math.round(raw * 10) / 10;
+      }
+
+      // ── Phase 2: pick the rating/slope for a portfolio entry + teesPlayed string ──
+      // Combo tees ("Black / Blue combo", "Blue / White combo") have their own
+      // officially published rating/slope; we do NOT average the two parent
+      // sets, because that gives wrong differentials. Combos return null here
+      // and the form prompts the user to enter the actual values.
+      function lookupTeeStats(entry, teesPlayedLabel) {
+        if (!entry || !entry.tees || !teesPlayedLabel) return { rating: null, slope: null };
+        const t = entry.tees;
+        const lbl = teesPlayedLabel.toLowerCase();
+        if (lbl.includes('combo')) return { rating: null, slope: null }; // user enters manually
+        if (lbl.includes('black')) return { rating: t.black.r, slope: t.black.s };
+        if (lbl.includes('blue'))  return { rating: t.blue.r,  slope: t.blue.s  };
+        if (lbl.includes('white')) return { rating: t.white.r, slope: t.white.s };
+        return { rating: null, slope: null };
+      }
+
+      // ── Phase 2: write a Round History row (or rows) ──
+      async function appendRoundHistory(roundRows) {
+        if (!roundRows.length) return;
+        const resp = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(ROUND_HISTORY_APPEND_RANGE)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ values: roundRows })
+          }
+        );
+        if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+        if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || 'Round History write failed'); }
+        return resp.json();
+      }
+
+      // ── Phase 2: upsert a Rankings rollup row, keyed on courseId ──
+      // If courseId already exists in column AD → update that row in place.
+      // Otherwise → append a new row at the bottom.
+      async function upsertRankingsRow(row, courseId) {
+        // Find the row index (if any) where AD == courseId.
+        const findResp = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANKINGS_COURSEID_RANGE)}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (findResp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+        if (!findResp.ok) { const e = await findResp.json(); throw new Error(e.error?.message || 'Rankings lookup failed'); }
+        const findData = await findResp.json();
+        const ids = (findData.values || []).map(r => (r[0] || '').toString().trim());
+        const idx = ids.findIndex(id => id === courseId);
+
+        if (idx >= 0) {
+          const sheetRow = idx + 2; // header is row 1; data starts row 2
+          const range = `Rankings!A${sheetRow}:AE${sheetRow}`;
+          const upd = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+            {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [row] })
+            }
+          );
+          if (!upd.ok) { const e = await upd.json(); throw new Error(e.error?.message || 'Rankings update failed'); }
+          return { action: 'updated', row: sheetRow };
+        } else {
+          const app = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Rankings!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+            {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [row] })
+            }
+          );
+          if (!app.ok) { const e = await app.json(); throw new Error(e.error?.message || 'Rankings append failed'); }
+          return { action: 'appended' };
+        }
+      }
 
       // ── Tab navigation ──
       function showTab(t) {
         document.querySelectorAll('.tab').forEach((b, i) => b.classList.toggle('active', ['rankings', 'log'][i] === t));
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById('page-' + t).classList.add('active');
+        // Phase 2: lazy-load PORTFOLIO on first interaction with either tab.
+        // Silent if there's a cached token; otherwise triggers the auth popup
+        // at a natural moment (user has decided to engage with their data).
+        if (!PORTFOLIO.length) {
+          loadPortfolio().then(() => {
+            if (t === 'rankings') renderRankings(PORTFOLIO);
+          }).catch(err => {
+            // Stay quiet — the visible Rankings panel shows its own error UI,
+            // and the autocomplete will recover the next time the user types.
+            console.warn('showTab portfolio load failed:', err);
+          });
+        }
       }
 
       function toggleCard(h) {
@@ -2729,34 +2108,29 @@
       }
 
       // ── Rankings: load from sheet ──
+      // Uses the already-parsed PORTFOLIO (loaded at app init). If PORTFOLIO is
+      // empty (e.g. user hit the page and immediately tapped Rankings before the
+      // init load completed), we force a fresh load.
       async function loadRankings() {
         const body = document.getElementById('rankingsBody');
-        body.innerHTML = '<div class="load-msg"><div class="load-spinner"></div>Loading from sheet...</div>';
-        try {
-          if (!accessToken) await getAccessToken();
-          // Pull columns: A(rank), B(name), C(tier), E(record), D(rounds), Q(stats), W(firstPlayed), X(lastPlayed), Y(avgScore), AB(partners)
-          const resp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A2:AB200`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`
-            }
-          });
-          if (!resp.ok) throw new Error('Sheet read failed');
-          const data = await resp.json();
-          const rows = (data.values || []).filter(r => r[1]); // filter blank rows
-          renderRankings(rows);
-        } catch (err) {
-          accessToken = null;
-          body.innerHTML = `<div class="load-msg" style="color:var(--red);">Error: ${err.message||err}<br><br><button onclick="loadRankings()" style="padding:8px 16px;background:var(--gold);color:#000;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Try Again</button></div>`;
+        if (!PORTFOLIO.length) {
+          body.innerHTML = '<div class="load-msg"><div class="load-spinner"></div>Loading from sheet...</div>';
+          try {
+            await loadPortfolio();
+          } catch (err) {
+            body.innerHTML = `<div class="load-msg" style="color:var(--red);">Error: ${err.message||err}<br><br><button onclick="loadRankings()" style="padding:8px 16px;background:var(--gold);color:#000;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Try Again</button></div>`;
+            return;
+          }
         }
+        renderRankings(PORTFOLIO);
       }
 
-      function renderRankings(rows) {
+      function renderRankings(entries) {
         // Group by tier
         const groups = {};
         TIER_ORDER.forEach(t => groups[t] = []);
-        rows.forEach(r => {
-          const tier = r[2]?.toString().trim() || '';
-          if (groups[tier]) groups[tier].push(r);
+        entries.forEach(c => {
+          if (groups[c.tier]) groups[c.tier].push(c);
         });
 
         const body = document.getElementById('rankingsBody');
@@ -2781,25 +2155,20 @@
       <div class="tier-courses" id="tier-${tier.replace(/\s/g,'_')}"></div>`;
 
           const coursesEl = grp.querySelector('.tier-courses');
-          courses.forEach(r => {
-            const rank = r[0] || '';
-            const name = r[1] || '';
-            const record = r[4] || '—';
-            const rounds = r[3] || '';
-            const stats = r[16] || '';
-            const firstPlayed = r[22] || '';
-            const lastPlayed = r[23] || '';
-            const avgScore = r[24] || '';
-            const partners = r[27] || '';
+          courses.forEach(c => {
+            const rank        = c.rank || '';
+            const name        = c.name || '';
+            const record      = c.record || '—';
+            const rounds      = c.rounds || '';
+            const firstPlayed = c.firstPlayed || '';
+            const lastPlayed  = c.lastPlayed || '';
+            const avgScore    = c.avgScore || '';
+            const partners    = c.partners || '';
+            const maxBirdies  = c.mostBirdies ? c.mostBirdies : '—';
+            const eagles      = c.eagles && c.eagles.length ? c.eagles.map(h => `Hole ${h}`).join(', ') : 'None';
 
             const row = document.createElement('div');
             row.className = 'course-row';
-
-            // Parse stats for display
-            const eagleMatch = stats.match(/Eagle \(Hole (\d+)\)/g) || [];
-            const birdieMatch = stats.match(/Most Birdies: (\d+)/);
-            const maxBirdies = birdieMatch ? birdieMatch[1] : '—';
-            const eagles = eagleMatch.length ? eagleMatch.join(', ') : 'None';
 
             row.innerHTML = `
         <div class="course-row-header" onclick="toggleCourseDetail(this.parentElement)">
@@ -3004,11 +2373,21 @@
       }
 
       function fillPortfolio(c, sub) {
+        currentPortfolioEntry = c; // remember for submit-time courseId + tee lookup
         document.getElementById('cName').value = c.name;
         document.getElementById('cSearch').value = c.name;
         if (sub && document.getElementById('cSub')) document.getElementById('cSub').value = sub;
         document.getElementById('newCourseWrap').style.display = 'flex';
-        if (c.par) document.getElementById('par').value = c.par;
+        // Par: fill if known, else leave blank and visually flag for entry
+        const parEl = document.getElementById('par');
+        if (c.par != null) {
+          parEl.value = c.par;
+          parEl.placeholder = '';
+        } else {
+          parEl.value = '';
+          parEl.placeholder = 'Enter par';
+          parEl.style.borderColor = 'var(--gold)';
+        }
         document.getElementById('rounds').value = (c.rounds || 0) + 1;
         if (c.pb && c.par) {
           const diff = c.pb - c.par;
@@ -3025,8 +2404,58 @@
           setStars('value', c.value);
           document.getElementById('valueRef').textContent = `avg: ${c.value}/5`;
         }
+        // Phase 2: auto-fill rating/slope if tees already selected
+        autoFillRatingSlope();
         document.getElementById('fillPanel').style.display = 'none';
         setSS(`Loaded — Rank #${c.rank} · ${c.rounds} rounds previously`, false);
+      }
+
+      // ── Phase 2: auto-fill rating/slope when course or tees changes ──
+      function autoFillRatingSlope() {
+        const teesEl   = document.getElementById('teesPlayed');
+        const ratingEl = document.getElementById('ratingUsed');
+        const slopeEl  = document.getElementById('slopeUsed');
+        if (!teesEl || !ratingEl || !slopeEl) return;
+        const tees = teesEl.value;
+        // Reset any previous hint styling
+        ratingEl.style.borderColor = '';
+        slopeEl.style.borderColor = '';
+        ratingEl.placeholder = '72.8';
+        slopeEl.placeholder  = '132';
+        if (!currentPortfolioEntry || !tees) return;
+        const isCombo = tees.toLowerCase().includes('combo');
+        if (isCombo) {
+          // Combo tees: leave blank, flag with gold border + prompt placeholder.
+          // We do NOT auto-average parent sets — combos are independently rated.
+          ratingEl.placeholder = 'enter from scorecard';
+          slopeEl.placeholder  = 'enter from scorecard';
+          ratingEl.style.borderColor = 'var(--gold)';
+          slopeEl.style.borderColor  = 'var(--gold)';
+          updateDifferentialLive();
+          return;
+        }
+        const { rating, slope } = lookupTeeStats(currentPortfolioEntry, tees);
+        if (rating != null && !ratingEl.value) ratingEl.value = rating;
+        if (slope  != null && !slopeEl.value)  slopeEl.value  = slope;
+        updateDifferentialLive();
+      }
+
+      // ── Phase 2: live differential calculation as user types ──
+      function updateDifferentialLive() {
+        const score  = parseInt(document.getElementById('recScore').value);
+        const rating = parseFloat(document.getElementById('ratingUsed')?.value);
+        const slope  = parseInt(document.getElementById('slopeUsed')?.value);
+        const el = document.getElementById('diffLive');
+        if (!el) return;
+        const d = computeDifferential(
+          isNaN(score) ? null : score,
+          isNaN(rating) ? null : rating,
+          isNaN(slope) ? null : slope
+        );
+        if (d == null) { el.textContent = '—'; el.className = 'rl'; return; }
+        const sign = d > 0 ? '+' : '';
+        el.textContent = `${sign}${d.toFixed(1)}`;
+        el.className = 'rl ' + (d < 0 ? 'under' : d < 5 ? 'even' : 'over');
       }
 
       function fillWeb(data) {
@@ -3475,9 +2904,13 @@
       function closeBeli() {
         document.getElementById('bOv').classList.remove('show');
       }
-
       // ── OAuth + push ──
+      // getAccessToken: checks sessionStorage cache first; if expired/missing,
+      // opens the OAuth popup. Implicit-flow tokens last 1 hour, and we honour
+      // the `expires_in` returned by Google rather than assuming.
       async function getAccessToken() {
+        const cached = getCachedToken();
+        if (cached) { accessToken = cached; return cached; }
         return new Promise((resolve, reject) => {
           const params = new URLSearchParams({
             client_id: CLIENT_ID,
@@ -3495,8 +2928,10 @@
                 popup.close();
                 const hash = new URLSearchParams(url.split('#')[1]);
                 const token = hash.get('access_token');
+                const expiresIn = parseInt(hash.get('expires_in') || '3600');
                 if (token) {
                   accessToken = token;
+                  setCachedToken(token, expiresIn);
                   resolve(token);
                 } else reject('No token');
               }
@@ -3509,28 +2944,12 @@
         });
       }
 
-      async function pushToSheet(row) {
-        const resp = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            values: [row]
-          })
-        });
-        if (!resp.ok) {
-          const e = await resp.json();
-          throw new Error(e.error?.message || 'Sheet write failed');
-        }
-        return resp.json();
-      }
-
+      // Build the 31-column Rankings rollup row (A..AE).
+      // Columns 1-29 unchanged from Phase 1; columns 30-31 are courseId + par.
       function buildRow() {
         const name = document.getElementById('cName').value.trim();
         const isNew = document.getElementById('newCourseChk').checked;
-        const tier = isNew ? document.getElementById('tierFull').value : '';
+        const tier = isNew ? document.getElementById('tierFull').value : (currentPortfolioEntry?.tier || '');
         const alias = document.getElementById('cAlias')?.value.trim() || '';
         const sub = document.getElementById('cSub')?.value.trim() || '';
         const bN = document.getElementById('blueN')?.value.trim() || '',
@@ -3556,39 +2975,162 @@
         const value = document.getElementById('valueVal').value;
         const tees = document.getElementById('teesPlayed').value;
         const fullName = sub ? `${name} (${sub})` : alias ? `${name} / ${alias}` : name;
+        // Phase 2: stable courseId — reuse if existing, generate-with-collision-suffix if new.
+        const courseId = currentPortfolioEntry?.courseId || generateUniqueCourseId(name);
+        const par = document.getElementById('par').value || '';
+        // When upserting, preserve existing tee data if the user didn't re-enter it.
+        const tee = (id) => document.getElementById(id)?.value || (currentPortfolioEntry ? '' : '');
+        const blueY = tee('blueY') || (currentPortfolioEntry?.tees?.blue?.y ?? '');
+        const blueR = tee('blueR') || (currentPortfolioEntry?.tees?.blue?.r ?? '');
+        const blueS = tee('blueS') || (currentPortfolioEntry?.tees?.blue?.s ?? '');
+        const blkY  = tee('blackY') || (currentPortfolioEntry?.tees?.black?.y ?? '');
+        const blkR  = tee('blackR') || (currentPortfolioEntry?.tees?.black?.r ?? '');
+        const blkS  = tee('blackS') || (currentPortfolioEntry?.tees?.black?.s ?? '');
+        const whtY  = tee('whiteY') || (currentPortfolioEntry?.tees?.white?.y ?? '');
+        const whtR  = tee('whiteR') || (currentPortfolioEntry?.tees?.white?.r ?? '');
+        const whtS  = tee('whiteS') || (currentPortfolioEntry?.tees?.white?.s ?? '');
         return ['', fullName, tier,
           document.getElementById('rounds').value || '', buildRec(),
-          document.getElementById('blueY')?.value || '', document.getElementById('blueR')?.value || '', document.getElementById('blueS')?.value || '',
-          document.getElementById('blackY')?.value || '', document.getElementById('blackR')?.value || '', document.getElementById('blackS')?.value || '',
-          document.getElementById('whiteY')?.value || '', document.getElementById('whiteR')?.value || '', document.getElementById('whiteS')?.value || '',
+          blueY, blueR, blueS,
+          blkY,  blkR,  blkS,
+          whtY,  whtR,  whtS,
           teeNotes, document.getElementById('views')?.value || '', stats,
           document.getElementById('grass')?.checked ? 'Yes' : 'No',
           document.getElementById('oki')?.checked ? 'Yes' : 'No',
           document.getElementById('priv')?.checked ? 'Yes' : 'No',
           paceVal, document.getElementById('notes')?.value.trim() || '',
           allDates[0] || '', allDates[allDates.length - 1] || '', avg,
-          tees, greens > 0 ? `${greens}/5` : '', value > 0 ? `${value}/5` : '', partners.join(', ')
+          tees, greens > 0 ? `${greens}/5` : '', value > 0 ? `${value}/5` : '', partners.join(', '),
+          courseId, par
         ];
+      }
+
+      // Build all Round History rows for this submit — one per dated entry,
+      // including the "today" round and each previous-round entry in dates[].
+      // Each row matches the 17-column Round History schema.
+      function buildRoundHistoryRows() {
+        const name        = document.getElementById('cName').value.trim();
+        const courseId    = currentPortfolioEntry?.courseId || generateUniqueCourseId(name);
+        const submittedAt = new Date().toISOString();
+        const teesPlayed  = document.getElementById('teesPlayed').value;
+        const rating      = parseFloat(document.getElementById('ratingUsed')?.value);
+        const slope       = parseInt(document.getElementById('slopeUsed')?.value);
+        const holesPlayed = parseInt(document.getElementById('holesPlayed')?.value) || 18;
+        const partnersStr = partners.join(', ');
+        const birdies     = parseInt(document.getElementById('birdies').value) || 0;
+        const eagRaw      = document.getElementById('eagle').value.trim();
+        const eagleHole   = (eagRaw && eagRaw.toLowerCase() !== 'no') ? eagRaw : '';
+        const roundNotes  = document.getElementById('notes')?.value.trim() || '';
+
+        const rows = [];
+
+        // "Today" round
+        const todayScore = parseInt(document.getElementById('recScore').value);
+        const todayDate  = document.getElementById('roundDate').value;
+        if (todayDate && !isNaN(todayScore)) {
+          const epoch = Date.parse(todayDate) || Date.now();
+          const diff = computeDifferential(
+            todayScore,
+            isNaN(rating) ? null : rating,
+            isNaN(slope)  ? null : slope
+          );
+          rows.push([
+            `${courseId}-${epoch}`,                 // roundId
+            todayDate,                              // playedAt
+            submittedAt,                            // submittedAt
+            courseId,                               // courseId
+            name,                                   // courseName
+            holesPlayed,                            // holesPlayed
+            todayScore,                             // strokes
+            todayScore,                             // score (= strokes for now)
+            '',                                     // holeStrokes
+            teesPlayed,                             // teesPlayed
+            isNaN(rating) ? '' : rating,            // rating
+            isNaN(slope)  ? '' : slope,             // slope
+            diff != null ? diff : '',               // differential
+            partnersStr,                            // partners
+            roundNotes,                             // notes
+            birdies,                                // birdies
+            eagleHole                               // eagleHole
+          ]);
+        }
+
+        // Previous rounds from the "Past Rounds Log" entries.
+        // These are intentionally minimal — historical data the user backfilled,
+        // so we don't claim tees/rating/slope/partners that weren't recorded.
+        dates.forEach(e => {
+          const sc = parseInt(e.score);
+          if (!e.date || isNaN(sc)) return;
+          const epoch = Date.parse(e.date) || Date.now();
+          rows.push([
+            `${courseId}-${epoch}`,
+            e.date,
+            submittedAt,
+            courseId,
+            name,
+            18,        // assume 18 unless we add a per-entry holesPlayed input later
+            sc,        // strokes
+            sc,        // score
+            '',        // holeStrokes
+            '',        // teesPlayed unknown for backfill
+            '',        // rating unknown
+            '',        // slope unknown
+            '',        // differential N/A
+            '',        // partners unknown
+            '',        // notes
+            0,
+            ''
+          ]);
+        });
+
+        return rows;
       }
 
       async function doSubmit() {
         const btn = document.getElementById('subBtn');
         const name = document.getElementById('cName').value.trim();
-        if (!name) {
-          showMsg('err', 'Course name is required.');
-          return;
-        }
+        if (!name) { showMsg('err', 'Course name is required.'); return; }
+
+        // Par is required (either the existing course already has it, or the
+        // user has to enter it now). This implements the "prompt when blank" rule.
+        const parVal = document.getElementById('par').value.trim();
+        if (!parVal) { showMsg('err', 'Par is required for this course — please enter it.'); document.getElementById('par').focus(); return; }
+
         btn.disabled = true;
         showMsg('load', 'Connecting to Google...');
         try {
           if (!accessToken) await getAccessToken();
-          showMsg('load', 'Pushing to sheet...');
-          await pushToSheet(buildRow());
-          showMsg('ok', '✓ Added to sheet!\n\nRun the Apps Script to re-sort and apply colors.');
+
+          // Build artefacts before any network call so we fail-fast on form errors.
+          const rollupRow      = buildRow();
+          const courseId       = rollupRow[29]; // col AD (0-indexed)
+          const historyRows    = buildRoundHistoryRows();
+
+          // 1. Upsert the Rankings rollup row (update if existing courseId, else append).
+          showMsg('load', 'Updating Rankings...');
+          const upsertResult = await upsertRankingsRow(rollupRow, courseId);
+
+          // 2. Append Round History rows (one per dated entry).
+          if (historyRows.length) {
+            showMsg('load', `Logging ${historyRows.length} round${historyRows.length === 1 ? '' : 's'}...`);
+            await appendRoundHistory(historyRows);
+          }
+
+          // 3. Refresh in-memory PORTFOLIO so subsequent submits in the same session
+          //    see the new state (no full page reload required).
+          try { await loadPortfolio(); } catch (e) { console.warn('Portfolio reload failed:', e); }
+
+          const verb = upsertResult.action === 'updated' ? 'updated' : 'added';
+          const msg = `✓ Rankings row ${verb}. ${historyRows.length} round${historyRows.length===1?'':'s'} written to Round History.\n\nRun the Apps Script to re-sort & re-color when convenient.`;
+          showMsg('ok', msg);
         } catch (err) {
-          accessToken = null;
-          if (err === 'Popup closed') showMsg('err', 'Sign-in cancelled.');
-          else showMsg('err', `Error: ${err.message||err}\n\nTap submit again to re-authenticate.`);
+          if (err === 'Popup closed') {
+            showMsg('err', 'Sign-in cancelled.');
+          } else if (err.message === 'Auth expired') {
+            showMsg('err', 'Sign-in expired. Tap submit again to re-authenticate.');
+          } else {
+            showMsg('err', `Error: ${err.message||err}\n\nTap submit again to retry.`);
+          }
         }
         btn.disabled = false;
       }
@@ -3630,6 +3172,21 @@
       // Auto-set today's date
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('roundDate').value = today;
+
+      // Phase 2: warm PORTFOLIO in the background. If the user has a cached
+      // token in sessionStorage this is silent and fast; otherwise it will
+      // queue auth on the first Rankings-tab open or first submit.
+      (async function warmPortfolio() {
+        if (!getCachedToken()) return; // defer auth to first user action
+        try {
+          await loadPortfolio();
+          // If the Rankings tab is currently active, re-render with fresh data.
+          const rankingsActive = document.getElementById('page-rankings')?.classList.contains('active');
+          if (rankingsActive) renderRankings(PORTFOLIO);
+        } catch (err) {
+          console.warn('Background portfolio load failed (will retry on user action):', err);
+        }
+      })();
 
     </script>
 </body>
