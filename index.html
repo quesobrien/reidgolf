@@ -189,6 +189,214 @@
       background: rgba(201, 168, 76, .22);
     }
 
+    /* ── Handicap Index card (Phase 2.5+) ──
+       WHS handicap index (best 8 of last 20 differentials, or sliding
+       sub-20 table per USGA Rule 5.2). Lives at top of Rankings page.
+       Includes an inline SVG lifetime trend chart below the headline number. */
+    .hi-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, var(--gc) 0%, var(--gd) 100%);
+      border: 1px solid var(--gold-dim);
+      border-left: 3px solid var(--gold);
+      border-radius: 6px;
+    }
+
+    .hi-top {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .hi-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .hi-label {
+      font-size: 9px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--cd);
+      line-height: 1;
+    }
+
+    .hi-prov {
+      font-size: 8px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--warn);
+      background: rgba(224, 123, 48, .12);
+      border: 1px solid rgba(224, 123, 48, .35);
+      border-radius: 3px;
+      padding: 1px 5px;
+      line-height: 1.4;
+    }
+
+    .hi-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--gold);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .hi-value.pending {
+      color: var(--cd);
+    }
+
+    .hi-basis {
+      flex: 1;
+      text-align: right;
+      font-size: 10px;
+      color: var(--cd);
+      font-style: italic;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Lifetime trend chart (replays WHS formula at each historical round) */
+    .hi-chart-wrap {
+      border-top: 1px solid rgba(201, 168, 76, .15);
+      padding-top: 10px;
+    }
+
+    .hi-chart {
+      display: block;
+      width: 100%;
+      height: 90px;
+      overflow: visible; /* dots near edge shouldn't clip */
+    }
+
+    .hi-trend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--cd);
+      letter-spacing: .04em;
+    }
+
+    .hi-trend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .hi-trend-label {
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--cd);
+      opacity: .7;
+    }
+
+    .hi-trend .ok   { color: var(--ok); }
+    .hi-trend .warn { color: var(--warn); }
+    .hi-trend .cd   { color: var(--cd); }
+
+    /* ── Import page (Phase 2.5+) ── */
+    .imp-summary {
+      font-size: 12px;
+      color: var(--cream);
+      background: rgba(201, 168, 76, .06);
+      border: 1px solid var(--gold-dim);
+      border-radius: 5px;
+      padding: 10px 12px;
+      line-height: 1.6;
+    }
+
+    .imp-summary .imp-num {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .imp-mappings {
+      max-height: 480px;
+      overflow-y: auto;
+      border-top: 1px solid rgba(201, 168, 76, .15);
+      margin-top: 6px;
+    }
+
+    .imp-section-title {
+      font-size: 9px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--cd);
+      padding: 14px 0 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .05);
+    }
+
+    .imp-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      font-size: 11px;
+    }
+
+    .imp-row:last-child {
+      border-bottom: none;
+    }
+
+    .imp-row-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--cream);
+    }
+
+    .imp-row-count {
+      flex: 0 0 50px;
+      color: var(--cd);
+      font-size: 10px;
+      text-align: right;
+    }
+
+    .imp-row-select {
+      flex: 0 0 200px;
+      padding: 5px 6px;
+      background: var(--gc);
+      border: 1px solid var(--gold-dim);
+      border-radius: 4px;
+      color: var(--cream);
+      font-family: inherit;
+      font-size: 11px;
+    }
+
+    .imp-row-select.unresolved {
+      border-color: var(--warn);
+    }
+
+    .imp-status-pill {
+      flex: 0 0 auto;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 9px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .imp-status-pill.matched { background: rgba(76, 175, 125, .15); border: 1px solid var(--ok); color: var(--ok); }
+    .imp-status-pill.review  { background: rgba(224, 123, 48, .12); border: 1px solid var(--warn); color: var(--warn); }
+    .imp-status-pill.new     { background: var(--gold-pale); border: 1px solid var(--gold-dim); color: var(--gold); }
+    .imp-status-pill.skip    { background: rgba(192, 57, 43, .12); border: 1px solid var(--red); color: var(--red); }
+
     .load-msg {
       text-align: center;
       padding: 40px 20px;
@@ -396,7 +604,7 @@
     .round-entry {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       padding: 6px 0;
       border-bottom: 1px solid rgba(255, 255, 255, .04);
       font-size: 11px;
@@ -408,22 +616,63 @@
 
     .round-date {
       color: var(--cd);
-      width: 90px;
+      width: 80px;
       flex-shrink: 0;
     }
 
     .round-score {
       color: var(--cream);
-      width: 60px;
+      width: 72px;
       flex-shrink: 0;
       font-weight: 500;
+    }
+
+    .round-tees {
+      font-size: 10px;
+      color: var(--cd);
+      width: 60px;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .round-diff {
+      font-size: 10px;
+      color: var(--gold);
+      width: 36px;
+      flex-shrink: 0;
+      text-align: right;
     }
 
     .round-partners {
       color: var(--cd);
       font-size: 10px;
       flex: 1;
+      min-width: 0;
       font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .round-empty {
+      font-size: 11px;
+      color: var(--cd);
+      font-style: italic;
+      padding: 6px 0;
+    }
+
+    .round-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--gold-dim);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
     }
 
     .detail-tags {
@@ -1541,6 +1790,7 @@
     <div class="tabs">
       <button class="tab active" onclick="showTab('rankings')">📋 My Rankings</button>
       <button class="tab" onclick="showTab('log')">+ Log a Round</button>
+      <button class="tab" onclick="showTab('import')">📥 Import</button>
     </div>
 
     <!-- ══════════════════════════════
@@ -1550,6 +1800,22 @@
       <div class="rankings-header">
         <span class="rankings-title">My Rankings</span>
         <button class="refresh-btn" onclick="loadRankings()">↺ Refresh</button>
+      </div>
+      <!-- Phase 2.5+: Handicap Index card (WHS: best 8 of last 20 differentials)
+           with lifetime trend chart that updates after each new round. -->
+      <div class="hi-card" id="hiCard">
+        <div class="hi-top">
+          <div class="hi-meta">
+            <span class="hi-label">Handicap Index</span>
+            <span class="hi-prov" id="hiProv" style="display:none;">Provisional</span>
+          </div>
+          <span class="hi-value" id="hiValue">—</span>
+          <span class="hi-basis" id="hiBasis">Tap Refresh to load</span>
+        </div>
+        <div class="hi-chart-wrap" id="hiChartWrap" style="display:none;">
+          <svg class="hi-chart" id="hiChart" viewBox="0 0 400 90" preserveAspectRatio="none" aria-label="Handicap index trend over time"></svg>
+          <div class="hi-trend" id="hiTrend"></div>
+        </div>
       </div>
       <div id="rankingsBody">
         <div class="load-msg">
@@ -1655,13 +1921,19 @@
                 <label class="tog"><input type="checkbox" id="priv">
                   <div class="tt"></div><span class="tl">Private</span>
                 </label>
-                <label class="tog"><input type="checkbox" id="goodPace">
-                  <div class="tt"></div><span class="tl">Good Pace</span>
-                </label>
-                <label class="tog"><input type="checkbox" id="pace">
-                  <div class="tt"></div><span class="tl">Bad Pace</span>
-                </label>
               </div>
+            </div>
+            <div class="f">
+              <label>Pace of Play <span class="ref" id="paceRef"></span></label>
+              <div class="star-row" id="paceStars">
+                <span class="star" onclick="setStars('pace',1)">★</span>
+                <span class="star" onclick="setStars('pace',2)">★</span>
+                <span class="star" onclick="setStars('pace',3)">★</span>
+                <span class="star" onclick="setStars('pace',4)">★</span>
+                <span class="star" onclick="setStars('pace',5)">★</span>
+                <span class="star-label" id="paceLabel">—</span>
+              </div>
+              <input type="hidden" id="paceVal" value="0">
             </div>
           </div>
 
@@ -1676,6 +1948,27 @@
       <div class="card open">
         <div class="ch" onclick="toggleCard(this)"><span class="ct">This Round</span><span class="cv">▼</span></div>
         <div class="cb">
+          <div class="f">
+            <label>Tees Played</label>
+            <select id="teesPlayed" onchange="autoFillRatingSlope()">
+              <option value="">— Select —</option>
+              <option value="Black (Tips)">Black (Tips)</option>
+              <option value="Blue">Blue</option>
+              <option value="White">White</option>
+              <option value="Black / Blue combo">Black / Blue combo</option>
+              <option value="Blue / White combo">Blue / White combo</option>
+            </select>
+          </div>
+          <div class="r2">
+            <div class="f">
+              <label>Rating Used <span class="ref">auto</span></label>
+              <input type="number" id="ratingUsed" step="0.1" min="55" max="80" placeholder="72.8" oninput="updateDifferentialLive()">
+            </div>
+            <div class="f">
+              <label>Slope Used <span class="ref">auto</span></label>
+              <input type="number" id="slopeUsed" min="55" max="155" placeholder="132" oninput="updateDifferentialLive()">
+            </div>
+          </div>
           <div class="f"><label>Date Played</label><input type="date" id="roundDate"></div>
           <div class="r2">
             <div class="f">
@@ -1710,27 +2003,6 @@
             </div>
           </div>
           <div class="f">
-            <label>Tees Played</label>
-            <select id="teesPlayed" onchange="autoFillRatingSlope()">
-              <option value="">— Select —</option>
-              <option value="Black (Tips)">Black (Tips)</option>
-              <option value="Blue">Blue</option>
-              <option value="White">White</option>
-              <option value="Black / Blue combo">Black / Blue combo</option>
-              <option value="Blue / White combo">Blue / White combo</option>
-            </select>
-          </div>
-          <div class="r2">
-            <div class="f">
-              <label>Rating Used <span class="ref">auto</span></label>
-              <input type="number" id="ratingUsed" step="0.1" min="55" max="80" placeholder="72.8" oninput="updateDifferentialLive()">
-            </div>
-            <div class="f">
-              <label>Slope Used <span class="ref">auto</span></label>
-              <input type="number" id="slopeUsed" min="55" max="155" placeholder="132" oninput="updateDifferentialLive()">
-            </div>
-          </div>
-          <div class="f">
             <label>Greens Quality <span class="ref" id="greensRef"></span></label>
             <div class="star-row" id="greensStars">
               <span class="star" onclick="setStars('greens',1)">★</span>
@@ -1753,6 +2025,18 @@
               <span class="star-label" id="valueLabel">—</span>
             </div>
             <input type="hidden" id="valueVal" value="0">
+          </div>
+          <div class="f">
+            <label>Walkability <span class="ref" id="walkRef"></span></label>
+            <div class="star-row" id="walkStars">
+              <span class="star" onclick="setStars('walk',1)">★</span>
+              <span class="star" onclick="setStars('walk',2)">★</span>
+              <span class="star" onclick="setStars('walk',3)">★</span>
+              <span class="star" onclick="setStars('walk',4)">★</span>
+              <span class="star" onclick="setStars('walk',5)">★</span>
+              <span class="star-label" id="walkLabel">—</span>
+            </div>
+            <input type="hidden" id="walkVal" value="0">
           </div>
           <div class="f">
             <label>Playing Partners</label>
@@ -1830,6 +2114,71 @@
 
       </div><!-- /page-log -->
 
+    <!-- ══════════════════════════════
+     IMPORT PAGE (Phase 2.5+)
+═══════════════════════════════ -->
+    <div class="page" id="page-import">
+      <div class="rankings-header">
+        <span class="rankings-title">Import from 18Birdies</span>
+      </div>
+
+      <div class="card open">
+        <div class="ch"><span class="ct">Step 1 — Upload JSON</span><span class="cv"></span></div>
+        <div class="cb">
+          <p style="font-size:11px;color:var(--cd);line-height:1.5;margin:0 0 12px 0;">
+            Request your data export from
+            <a href="https://18birdies.com/download-account-data/" target="_blank" rel="noopener" style="color:var(--gold);">18birdies.com/download-account-data</a>.
+            Drop the JSON file below. The file stays in your browser — nothing is uploaded to a server until you confirm.
+          </p>
+          <input type="file" id="impFile" accept="application/json,.json" onchange="onImpFile()" style="font-size:11px;color:var(--cd);">
+          <div id="impStatus" style="margin-top:10px;font-size:11px;"></div>
+        </div>
+      </div>
+
+      <div class="card open" id="impStep2" style="display:none;">
+        <div class="ch"><span class="ct">Step 2 — Review Course Mapping</span><span class="cv"></span></div>
+        <div class="cb">
+          <div id="impSummary" class="imp-summary"></div>
+          <div style="display:flex;gap:14px;margin:14px 0 6px 0;flex-wrap:wrap;">
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:10px;color:var(--cd);letter-spacing:.08em;text-transform:uppercase;">Default tee — early rounds</label>
+              <select id="impTeeEarly" style="width:100%;padding:6px 8px;background:var(--gc);border:1px solid var(--gold-dim);border-radius:4px;color:var(--cream);font-family:inherit;font-size:12px;margin-top:4px;">
+                <option value="White" selected>White</option>
+                <option value="Blue">Blue</option>
+                <option value="Black (Tips)">Black (Tips)</option>
+                <option value="">(leave blank)</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <label style="font-size:10px;color:var(--cd);letter-spacing:.08em;text-transform:uppercase;">Default tee — recent rounds</label>
+              <select id="impTeeLate" style="width:100%;padding:6px 8px;background:var(--gc);border:1px solid var(--gold-dim);border-radius:4px;color:var(--cream);font-family:inherit;font-size:12px;margin-top:4px;">
+                <option value="Blue" selected>Blue</option>
+                <option value="White">White</option>
+                <option value="Black (Tips)">Black (Tips)</option>
+                <option value="">(leave blank)</option>
+              </select>
+            </div>
+            <div style="flex:0 0 130px;">
+              <label style="font-size:10px;color:var(--cd);letter-spacing:.08em;text-transform:uppercase;">Cutoff date</label>
+              <input type="date" id="impTeeCutoff" value="2024-07-01" style="width:100%;padding:6px 8px;background:var(--gc);border:1px solid var(--gold-dim);border-radius:4px;color:var(--cream);font-family:inherit;font-size:12px;margin-top:4px;">
+            </div>
+          </div>
+          <p style="font-size:10px;color:var(--cd);font-style:italic;margin:6px 0 14px 0;">
+            Washington National rounds are auto-tagged "Blue / White combo". Other courses use the date-based default above.
+          </p>
+          <div id="impMappings" class="imp-mappings"></div>
+        </div>
+      </div>
+
+      <div class="card open" id="impStep3" style="display:none;">
+        <div class="ch"><span class="ct">Step 3 — Import</span><span class="cv"></span></div>
+        <div class="cb">
+          <button id="impGoBtn" class="sb" onclick="runImport()" style="width:100%;">Import rounds</button>
+          <div id="impResult" style="margin-top:14px;font-size:11px;line-height:1.6;"></div>
+        </div>
+      </div>
+    </div><!-- /page-import -->
+
       <!-- BELI OVERLAY -->
       <div class="bov" id="bOv">
         <div class="bc">
@@ -1845,13 +2194,17 @@
       const CLIENT_ID = '390848816796-rca0q7tnuprhbrtfc9odqm3ibfr7brr5.apps.googleusercontent.com';
       const SHEET_ID = '147bYNkEYPrC_GnqZZ7jLGW0FORHq--TZFwZ09Sh6mwg';
       const SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
-      const RANKINGS_RANGE = 'Rankings!A2:AE200'; // 31 columns: A..AE
+      const RANKINGS_RANGE = 'Rankings!A2:AF200'; // 32 columns: A..AF (AF=walkability, added in Phase 2.5)
       const RANKINGS_COURSEID_RANGE = 'Rankings!AD2:AD200'; // for upsert lookup
       const ROUND_HISTORY_APPEND_RANGE = 'Round History!A:Q'; // 17 columns
+      const ROUND_HISTORY_FETCH_RANGE = 'Round History!A2:Q1000'; // 17 cols × up to 999 rounds (Phase 2.5)
       const TOKEN_KEY = 'golfToken';
       const TOKEN_EXPIRY_KEY = 'golfTokenExpiry';
       let accessToken = null;
       let currentPortfolioEntry = null; // set when user picks an existing course
+      // Phase 2.5: lazy-loaded cache of every Round History row, keyed in-memory by courseId at lookup time.
+      // null = not fetched yet; [] = fetched and empty. Cleared after each submit so a new round appears.
+      let ROUND_HISTORY_ALL = null;
 
       // ── Tier config ──
       const TIER_ORDER = ["S", "A", "B", "High C", "Mid C", "Low C", "D", "E", "F"];
@@ -1916,13 +2269,30 @@
           eagles: eg ? [eg[1].trim()] : []
         };
       }
+      // Phase 2.5: pace is migrating from a "Good"/"Bad" string toggle to a
+      // 1–5 integer star rating. This parser handles both shapes so the app
+      // keeps rendering correctly during the rollout window (before the
+      // migration backfills column U). Maps: "Good" → 4, "Bad" → 2.
+      // Returns null for unrated.
+      function parsePaceCell(v) {
+        if (v === '' || v == null) return null;
+        if (typeof v === 'number') {
+          return (v >= 1 && v <= 5) ? Math.round(v) : null;
+        }
+        const t = v.toString().trim().toLowerCase();
+        if (!t) return null;
+        if (t === 'good') return 4;
+        if (t === 'bad')  return 2;
+        const n = parseInt(t);
+        return (!isNaN(n) && n >= 1 && n <= 5) ? n : null;
+      }
       function parsePortfolioRow(r) {
         // Column index map (0-based) — matches Apps Script COL constants minus 1:
         // 0=rank, 1=name, 2=tier, 3=rounds, 4=record, 5-7=blueYRS, 8-10=blackYRS,
         // 11-13=whiteYRS, 14=teeNotes, 15=views, 16=stats, 17=grass, 18=oki,
         // 19=private, 20=pace, 21=notes, 22=firstPlayed, 23=lastPlayed,
         // 24=avgScore, 25=teesPlayed, 26=greens, 27=value, 28=partners,
-        // 29=courseId, 30=par
+        // 29=courseId, 30=par, 31=walkability (Phase 2.5)
         const stats = parseStatsCell(r[16]);
         const recM = (r[4] || '').toString().match(/(\d+)\s*\(/);
         const grM = (r[26] || '').toString().match(/(\d+)/);
@@ -1946,7 +2316,9 @@
           grass: r[17] || '',
           oki: r[18] || '',
           private: r[19] || '',
-          pace: r[20] || '',
+          // Phase 2.5: pace migrated from string toggle to 1–5 integer.
+          // parsePaceCell handles both legacy ("Good"/"Bad") and new (integer) shapes.
+          pace: parsePaceCell(r[20]),
           notes: r[21] || '',
           firstPlayed: r[22] || '',
           lastPlayed: r[23] || '',
@@ -1957,6 +2329,8 @@
           partners: r[28] || '',
           courseId: (r[29] || '').toString().trim(),
           par: r[30] !== '' && r[30] != null ? parseInt(r[30]) : null,
+          // Phase 2.5: walkability (integer 1–5; null = unrated). 5 = easy walk, 1 = hard walk.
+          walkability: r[31] !== '' && r[31] != null ? parseInt(r[31]) : null,
           // Aliases & subs aren't currently persisted to the sheet — default empty.
           aliases: [],
           subs: []
@@ -1964,6 +2338,853 @@
       }
       function rowsToPortfolio(rows) {
         return (rows || []).filter(r => r && r[1]).map(parsePortfolioRow);
+      }
+
+      // ── Phase 2.5: parse a Round History row into a structured object ──
+      // Schema (17 cols, see golf_phase2_migration.gs ROUND_HISTORY_HEADER):
+      // 0=roundId, 1=playedAt, 2=submittedAt, 3=courseId, 4=courseName,
+      // 5=holesPlayed, 6=strokes, 7=score, 8=holeStrokes, 9=teesPlayed,
+      // 10=rating, 11=slope, 12=differential, 13=partners, 14=notes,
+      // 15=birdies, 16=eagleHole
+      function parseRoundHistoryRow(r) {
+        return {
+          roundId:      r[0]  || '',
+          playedAt:     r[1]  || '',
+          submittedAt:  r[2]  || '',
+          courseId:     (r[3] || '').toString().trim(),
+          courseName:   r[4]  || '',
+          holesPlayed:  r[5]  || '',
+          strokes:      r[6]  || '',
+          score:        r[7]  || '',
+          holeStrokes:  r[8]  || '',
+          teesPlayed:   r[9]  || '',
+          rating:       r[10] || '',
+          slope:        r[11] || '',
+          differential: r[12] || '',
+          partners:     r[13] || '',
+          notes:        r[14] || '',
+          birdies:      r[15] || '',
+          eagleHole:    r[16] || ''
+        };
+      }
+
+      // ── Phase 2.5: lazy-load every Round History row, once per session ──
+      // We pull A2:Q1000 in a single GET and filter client-side. With < a few
+      // thousand rounds expected over Reid's lifetime this is plenty fast and
+      // avoids per-course Sheets queries (which would also fight the upsert
+      // path's existing token-cache assumptions). Returns the cached array if
+      // already loaded.
+      async function loadAllRoundHistory() {
+        if (ROUND_HISTORY_ALL) return ROUND_HISTORY_ALL;
+        if (!accessToken) await getAccessToken();
+        const resp = await fetch(
+          `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(ROUND_HISTORY_FETCH_RANGE)}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+        if (!resp.ok) {
+          const e = await resp.json();
+          throw new Error(e.error?.message || 'Round History read failed');
+        }
+        const data = await resp.json();
+        ROUND_HISTORY_ALL = (data.values || [])
+          .filter(r => r && r[0]) // require a roundId
+          .map(parseRoundHistoryRow);
+        return ROUND_HISTORY_ALL;
+      }
+
+      // Filter cached rounds by courseId, newest-first by playedAt.
+      // ISO date sort works lexicographically — only valid because we store yyyy-mm-dd.
+      function getRoundsForCourse(courseId) {
+        if (!ROUND_HISTORY_ALL || !courseId) return [];
+        return ROUND_HISTORY_ALL
+          .filter(r => r.courseId === courseId)
+          .sort((a, b) => (b.playedAt || '').localeCompare(a.playedAt || ''));
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      // Phase 2.5+: USGA / World Handicap System Handicap Index
+      // ──────────────────────────────────────────────────────────────
+      // Computes the player's Handicap Index using the post-2020 WHS rules
+      // (USGA Rule 5.2). Pure function — takes a flat array of round objects
+      // with a `differential` numeric field and `playedAt` ISO date, returns:
+      //   { index, basis, status, sampleSize, totalRounds, provisional, lowest }
+      //
+      // Algorithm:
+      //   1. Keep only rounds with a numeric differential AND a played date.
+      //      (Backfilled "Past Rounds Log" entries lack rating/slope and thus
+      //      have blank differential — they're excluded from the index.)
+      //   2. Sort by playedAt descending, take the most recent 20.
+      //   3. From those, find the lowest N differentials (N from Rule 5.2 table).
+      //   4. Average those N values, apply the (small) adjustment for low-N cases.
+      //   5. Round to one decimal place.
+      //
+      // Note: this implementation deliberately omits the WHS safeguards
+      // (soft/hard cap on upward movement, exceptional-score reduction).
+      // Those require a "Low Handicap Index from the previous 365 days"
+      // reference point and full historical audit trail that we don't store.
+      // For a personal-tracking app, the unadorned 8-of-20 average is the
+      // number golfers actually quote in conversation — close enough.
+      const WHS_TABLE = (function() {
+        // Index = number of differentials available (capped at 20 by caller).
+        // Each cell: { take: N, adj: stroke adjustment to apply after averaging }.
+        const t = new Array(21).fill(null);
+        t[3]  = { take: 1, adj: -2.0 };
+        t[4]  = { take: 1, adj: -1.0 };
+        t[5]  = { take: 1, adj:  0.0 };
+        t[6]  = { take: 2, adj: -1.0 };
+        t[7]  = { take: 2, adj:  0.0 };
+        t[8]  = { take: 2, adj:  0.0 };
+        t[9]  = { take: 3, adj:  0.0 };
+        t[10] = { take: 3, adj:  0.0 };
+        t[11] = { take: 3, adj:  0.0 };
+        t[12] = { take: 4, adj:  0.0 };
+        t[13] = { take: 4, adj:  0.0 };
+        t[14] = { take: 4, adj:  0.0 };
+        t[15] = { take: 5, adj:  0.0 };
+        t[16] = { take: 5, adj:  0.0 };
+        t[17] = { take: 6, adj:  0.0 };
+        t[18] = { take: 6, adj:  0.0 };
+        t[19] = { take: 7, adj:  0.0 };
+        t[20] = { take: 8, adj:  0.0 };
+        return t;
+      })();
+
+      // Pure WHS Rule 5.2 calculation. Takes an array of differentials sorted
+      // newest-first, returns { index, sampleSize, adj } or null if < 3.
+      // Used by BOTH the snapshot (computeHandicapIndex) and the historical
+      // time series (computeHandicapTimeSeries) so the math stays in one place.
+      function _whsHandicap(diffsNewestFirst) {
+        if (!diffsNewestFirst || diffsNewestFirst.length < 3) return null;
+        const last20 = diffsNewestFirst.slice(0, 20);
+        const n = last20.length;
+        const entry = WHS_TABLE[n];
+        if (!entry) return null;
+        const lowest = last20.slice().sort((a, b) => a - b).slice(0, entry.take);
+        const raw = (lowest.reduce((s, d) => s + d, 0) / lowest.length) + entry.adj;
+        return {
+          index: Math.round(raw * 10) / 10,
+          sampleSize: entry.take,
+          adj: entry.adj,
+          windowSize: n
+        };
+      }
+
+      function computeHandicapIndex(rounds) {
+        const valid = (rounds || [])
+          .map(r => ({
+            diff: parseFloat(r.differential),
+            playedAt: r.playedAt || '',
+            courseName: r.courseName || ''
+          }))
+          .filter(r => !isNaN(r.diff) && r.playedAt);
+
+        const totalRounds = valid.length;
+
+        if (totalRounds < 3) {
+          return {
+            index: null,
+            basis: totalRounds === 0
+              ? 'No rated rounds yet'
+              : `${totalRounds}/3 rounds toward establishing`,
+            status: 'pending',
+            sampleSize: 0,
+            totalRounds,
+            provisional: true,
+            lowest: []
+          };
+        }
+
+        // Most-recent 20.
+        const last20 = valid
+          .slice()
+          .sort((a, b) => b.playedAt.localeCompare(a.playedAt))
+          .slice(0, 20);
+
+        const h = _whsHandicap(last20.map(r => r.diff));
+        if (!h) {
+          return { index: null, basis: 'Calculation error', status: 'error',
+                   sampleSize: 0, totalRounds, provisional: true, lowest: [] };
+        }
+
+        const basis = h.windowSize >= 20
+          ? 'best 8 of last 20'
+          : `best ${h.sampleSize} of ${h.windowSize}` +
+            (h.adj !== 0 ? ` · adj ${h.adj > 0 ? '+' : ''}${h.adj.toFixed(1)}` : '');
+
+        return {
+          index: h.index,
+          basis,
+          status: 'ok',
+          sampleSize: h.sampleSize,
+          totalRounds,
+          provisional: h.windowSize < 20,
+          lowest: null // not currently consumed; drop the field to keep payload small
+        };
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      // Phase 2.5+: Lifetime handicap time series
+      // ──────────────────────────────────────────────────────────────
+      // Walks every rated round in chronological order. At each round, asks:
+      // "what would the handicap have been right after this round?" by feeding
+      // the rounds-available-up-to-this-point through _whsHandicap. Builds a
+      // [{ date, index, provisional }] series for charting.
+      //
+      // Pre-WHS rounds (pre-2020) would technically have used the old USGA
+      // formula (lowest 10 of 20, × 0.96). We don't try to backfill historical
+      // formula changes — every point uses today's WHS rules. That's the
+      // honest reading of "what's my trend" since the methodology is unified.
+      //
+      // Cost: O(n²) in n = number of rated rounds. At n=500 (a decade of
+      // weekly golf) that's ~250k ops, sub-millisecond in modern JS engines.
+      function computeHandicapTimeSeries(rounds) {
+        const valid = (rounds || [])
+          .map(r => ({ diff: parseFloat(r.differential), playedAt: r.playedAt || '' }))
+          .filter(r => !isNaN(r.diff) && r.playedAt)
+          .sort((a, b) => a.playedAt.localeCompare(b.playedAt)); // oldest first
+
+        const series = [];
+        for (let i = 0; i < valid.length; i++) {
+          // Rounds available at this point in history, newest-first.
+          // slice(0, i+1) takes oldest..current; reverse() flips to newest-first.
+          const newestFirst = valid.slice(0, i + 1).reverse();
+          const h = _whsHandicap(newestFirst.map(r => r.diff));
+          if (h) {
+            series.push({
+              date: valid[i].playedAt,
+              index: h.index,
+              provisional: h.windowSize < 20
+            });
+          }
+        }
+        return series;
+      }
+
+      // Render the inline SVG trend chart inside the handicap card.
+      // Time-proportional x-axis (preserves play-frequency texture), inverted
+      // y-axis (lower handicap = higher on screen, conventional in golf).
+      // Highlights best-ever (green) and current (gold).
+      function renderHandicapTimeSeries(series) {
+        const wrap = document.getElementById('hiChartWrap');
+        const svg = document.getElementById('hiChart');
+        const trendEl = document.getElementById('hiTrend');
+        if (!wrap || !svg || !trendEl) return;
+
+        // Need at least 3 points for a meaningful line.
+        if (!series || series.length < 3) {
+          wrap.style.display = 'none';
+          return;
+        }
+        wrap.style.display = 'block';
+
+        // SVG viewBox is 400×90; preserveAspectRatio="none" lets it scale to width.
+        const W = 400, H = 90;
+        const padX = 8, padY = 12;
+        const usableW = W - padX * 2;
+        const usableH = H - padY * 2;
+
+        // Time axis: linear in real elapsed days. Preserves the "I played a lot
+        // last summer, almost nothing this winter" visual signal.
+        const minDate = Date.parse(series[0].date);
+        const maxDate = Date.parse(series[series.length - 1].date);
+        const dateSpan = Math.max(1, maxDate - minDate);
+
+        // Value axis: extend min/max by 10% padding so the line doesn't touch edges.
+        const values = series.map(s => s.index);
+        let minVal = Math.min(...values);
+        let maxVal = Math.max(...values);
+        const range = maxVal - minVal;
+        if (range < 1) {
+          // Effectively flat line — give it some headroom anyway.
+          minVal -= 0.5;
+          maxVal += 0.5;
+        } else {
+          minVal -= range * 0.1;
+          maxVal += range * 0.1;
+        }
+        const valSpan = maxVal - minVal;
+
+        const toX = d => padX + ((Date.parse(d) - minDate) / dateSpan) * usableW;
+        // Y is inverted: low handicap (good) → high on screen.
+        const toY = v => padY + (1 - (v - minVal) / valSpan) * usableH;
+
+        // Build the line path. M for first point, L for the rest.
+        const pathD = series.map((p, i) => {
+          const x = toX(p.date).toFixed(1);
+          const y = toY(p.index).toFixed(1);
+          return (i === 0 ? 'M' : 'L') + x + ',' + y;
+        }).join(' ');
+
+        // Best-ever (lowest) and current points.
+        const best = series.reduce((a, b) => a.index <= b.index ? a : b);
+        const current = series[series.length - 1];
+
+        // Light area-under-line fill for visual weight.
+        const areaD = pathD + ` L${toX(current.date).toFixed(1)},${(H - padY).toFixed(1)}` +
+                              ` L${toX(series[0].date).toFixed(1)},${(H - padY).toFixed(1)} Z`;
+
+        svg.innerHTML = `
+          <defs>
+            <linearGradient id="hiAreaFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <line x1="${padX}" y1="${toY(current.index).toFixed(1)}" x2="${(W - padX).toFixed(1)}" y2="${toY(current.index).toFixed(1)}"
+                stroke="rgba(201,168,76,0.15)" stroke-width="1" stroke-dasharray="3,3" />
+          <path d="${areaD}" fill="url(#hiAreaFill)" />
+          <path d="${pathD}" stroke="var(--gold)" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round" />
+          <circle cx="${toX(best.date).toFixed(1)}" cy="${toY(best.index).toFixed(1)}" r="3.5" fill="var(--ok)" stroke="var(--gd)" stroke-width="1" />
+          <circle cx="${toX(current.date).toFixed(1)}" cy="${toY(current.index).toFixed(1)}" r="3.5" fill="var(--gold)" stroke="var(--gd)" stroke-width="1" />
+        `;
+
+        // Trend summary: find a snapshot ~6mo and ~12mo before the latest entry,
+        // compute deltas, render directional arrows colored by improvement direction.
+        const lookback = (months) => {
+          const cutoff = new Date(maxDate);
+          cutoff.setMonth(cutoff.getMonth() - months);
+          const target = cutoff.toISOString().slice(0, 10);
+          for (let i = series.length - 1; i >= 0; i--) {
+            if (series[i].date <= target) return series[i];
+          }
+          return null;
+        };
+
+        const trendItem = (label, entry) => {
+          if (!entry || entry === current) return null;
+          const delta = current.index - entry.index;
+          // In golf, LOWER is better. Negative delta = improvement → green.
+          const arrow = delta < -0.1 ? '↘' : delta > 0.1 ? '↗' : '→';
+          const cls = delta < -0.1 ? 'ok' : delta > 0.1 ? 'warn' : 'cd';
+          const sign = delta > 0 ? '+' : '';
+          return `<span class="hi-trend-item"><span class="hi-trend-label">${label}</span> ${entry.index.toFixed(1)} <span class="${cls}">${arrow} ${sign}${delta.toFixed(1)}</span></span>`;
+        };
+
+        const parts = [];
+        parts.push(`<span class="hi-trend-item"><span class="hi-trend-label">Best</span> <span class="ok">${best.index.toFixed(1)}</span></span>`);
+        const six = trendItem('6mo', lookback(6));
+        if (six) parts.push(six);
+        const twelve = trendItem('1yr', lookback(12));
+        if (twelve) parts.push(twelve);
+
+        trendEl.innerHTML = parts.join('');
+      }
+
+      // Render the handicap card. Reads from ROUND_HISTORY_ALL — if it's not
+      // loaded yet, leaves the card in a loading state and bails. Caller is
+      // responsible for kicking off the fetch via refreshHandicapIndex().
+      function renderHandicapIndex() {
+        const valueEl = document.getElementById('hiValue');
+        const basisEl = document.getElementById('hiBasis');
+        const provEl  = document.getElementById('hiProv');
+        const chartWrap = document.getElementById('hiChartWrap');
+        if (!valueEl || !basisEl) return;
+
+        if (!ROUND_HISTORY_ALL) {
+          valueEl.textContent = '—';
+          valueEl.classList.add('pending');
+          basisEl.textContent = 'Loading rounds…';
+          if (provEl) provEl.style.display = 'none';
+          if (chartWrap) chartWrap.style.display = 'none';
+          return;
+        }
+
+        const result = computeHandicapIndex(ROUND_HISTORY_ALL);
+
+        if (result.status !== 'ok' || result.index == null) {
+          valueEl.textContent = '—';
+          valueEl.classList.add('pending');
+          basisEl.textContent = result.basis;
+          if (provEl) provEl.style.display = 'none';
+          if (chartWrap) chartWrap.style.display = 'none';
+          return;
+        }
+
+        // Golf convention: negative index renders as "+1.2" (plus handicap = below scratch).
+        const disp = result.index < 0
+          ? `+${(-result.index).toFixed(1)}`
+          : result.index.toFixed(1);
+
+        valueEl.textContent = disp;
+        valueEl.classList.remove('pending');
+        basisEl.textContent = result.basis;
+        if (provEl) provEl.style.display = result.provisional ? 'inline-block' : 'none';
+
+        // Phase 2.5+: lifetime trend chart. Renders when we have enough data
+        // (>=3 series points). renderHandicapTimeSeries hides the wrapper otherwise.
+        const series = computeHandicapTimeSeries(ROUND_HISTORY_ALL);
+        renderHandicapTimeSeries(series);
+      }
+
+      // Top-level orchestration: ensure ROUND_HISTORY_ALL is loaded, then render.
+      // Safe to call repeatedly — uses the same cache the rounds-log dropdown uses.
+      async function refreshHandicapIndex() {
+        const basisEl = document.getElementById('hiBasis');
+        try {
+          if (!ROUND_HISTORY_ALL) {
+            if (basisEl) basisEl.textContent = 'Loading rounds…';
+            await loadAllRoundHistory();
+          }
+          renderHandicapIndex();
+        } catch (err) {
+          console.warn('Handicap index refresh failed:', err);
+          if (basisEl) basisEl.textContent = "Couldn't load — tap Refresh";
+        }
+      }
+
+      // ══════════════════════════════════════════════════════════════
+      // Phase 2.5+: 18Birdies importer
+      // ══════════════════════════════════════════════════════════════
+      // Parses an 18Birdies GDPR JSON export, fuzzy-matches each round's
+      // course to Reid's existing PORTFOLIO, lets the user review/override
+      // mappings, then writes rounds to Round History and (for genuinely
+      // new courses) appends placeholder rows to Rankings.
+      //
+      // Tee assignment: date-based default (white pre-cutoff, blue after),
+      // with Washington National overridden to "Blue / White combo".
+      // Rating/slope/differential filled in at import time IF the matched
+      // course already has tee data stored. Otherwise blank — backfill
+      // happens later via the NCRDB scraper (separate Apps Script tool).
+
+      // Module-scoped state for the import workflow. Cleared on each new file.
+      let IMPORT_PLAN = null;
+
+      // Parse the raw 18Birdies JSON into a normalized shape.
+      // Filters: requires non-zero strokes + a resolvable course name.
+      function parseAirdrop(data) {
+        const md = data && data.myData;
+        if (!md || !md.activityData) throw new Error('This doesn\'t look like an 18Birdies export. Expected myData.activityData at the top level.');
+        const rawRounds = md.activityData.rounds || [];
+        const clubs = (md.clubData && md.clubData.playedClubs || []).concat(md.clubData && md.clubData.postedInClubs || []);
+        const clubMap = {};
+        clubs.forEach(c => { if (c.clubId) clubMap[c.clubId] = c.name; });
+
+        const rounds = rawRounds.map(r => {
+          const ms = r.timestamp;
+          const playedAt = new Date(ms).toISOString().slice(0, 10);
+          const clubId = r.clubId && r.clubId.id;
+          const name = clubMap[clubId] || '(unknown)';
+          const holes = Array.isArray(r.holeStrokes) ? r.holeStrokes.filter(n => n > 0) : [];
+          const reportedLen = (r.holeStrokes || []).length;
+          return {
+            birdiesId: r.id,
+            epochMs: ms,
+            playedAt,
+            clubId,
+            courseName: name,
+            strokes: r.strokes || 0,
+            holeStrokes: holes,
+            holesPlayed: holes.length === 9 ? 9 : holes.length === 18 ? 18 : (reportedLen === 9 ? 9 : 18),
+            birdies: (r.stats && r.stats.birdies) || 0,
+            eagles: (r.stats && r.stats.eagles) || 0
+          };
+        }).filter(r => r.epochMs && r.courseName !== '(unknown)' && r.strokes > 0);
+
+        rounds.sort((a, b) => a.epochMs - b.epochMs);
+        return rounds;
+      }
+
+      // Course name normalization: strip golf-domain stopwords + non-alphanums.
+      // Same algorithm used for both sides of the comparison.
+      function normalizeCourseName(s) {
+        return (s || '').toLowerCase()
+          .replace(/\b(golf|country|club|course|the|at|of|gc|cc|gccc)\b/g, '')
+          .replace(/[^a-z0-9 ]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      // Hybrid similarity: 50% Jaccard (tightness) + 50% coverage (prefix-friendly).
+      // Coverage ensures "Gold Mountain" → "Gold Mountain (Olympic)" beats incidental
+      // overlaps from short tokens.
+      function _nameSim(a, b) {
+        const A = new Set(a.split(' ').filter(Boolean));
+        const B = new Set(b.split(' ').filter(Boolean));
+        if (!A.size || !B.size) return 0;
+        const inter = [...A].filter(t => B.has(t)).length;
+        if (inter === 0) return 0;
+        const jaccard = inter / new Set([...A, ...B]).size;
+        const coverage = inter / Math.min(A.size, B.size);
+        return jaccard * 0.5 + coverage * 0.5;
+      }
+
+      // Top-k candidates for a given course name against the loaded PORTFOLIO.
+      function topMatches(name, portfolio, k) {
+        const tN = normalizeCourseName(name);
+        if (!tN) return [];
+        return portfolio
+          .map(p => ({ entry: p, score: _nameSim(tN, normalizeCourseName(p.name)) }))
+          .filter(x => x.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, k || 3);
+      }
+
+      // Group rounds by 18Birdies course name and pre-compute fuzzy-match candidates.
+      // Returns the IMPORT_PLAN data structure that drives the review UI + commit.
+      function buildImportPlan(rounds) {
+        const byCourse = {};
+        for (const r of rounds) {
+          if (!byCourse[r.courseName]) byCourse[r.courseName] = [];
+          byCourse[r.courseName].push(r);
+        }
+        const courses = Object.keys(byCourse).sort();
+        const mappings = {};
+        for (const name of courses) {
+          const cands = topMatches(name, PORTFOLIO, 5);
+          const best = cands[0];
+          let status, suggestedCourseId;
+          if (best && best.score >= 0.95) {
+            status = 'matched';
+            suggestedCourseId = best.entry.courseId;
+          } else if (best && best.score >= 0.5) {
+            status = 'review';
+            suggestedCourseId = best.entry.courseId;
+          } else {
+            status = 'new';
+            suggestedCourseId = '__new__';
+          }
+          mappings[name] = {
+            birdiesName: name,
+            rounds: byCourse[name],
+            candidates: cands,
+            status,
+            chosenCourseId: suggestedCourseId
+          };
+        }
+        return {
+          rounds,
+          byCourse,
+          mappings,
+          courses
+        };
+      }
+
+      // Render the Step-2 review UI.
+      // Each row: 18Birdies name | round count | dropdown of candidates (+ new + skip) | status pill.
+      // The dropdown lets Reid override the auto-pick.
+      function renderImportReview(plan) {
+        const summaryEl = document.getElementById('impSummary');
+        const mappingsEl = document.getElementById('impMappings');
+
+        // Summary line
+        const totalRounds = plan.rounds.length;
+        const courseCount = plan.courses.length;
+        const dateFirst = plan.rounds[0].playedAt;
+        const dateLast = plan.rounds[plan.rounds.length - 1].playedAt;
+        const auto = plan.courses.filter(c => plan.mappings[c].status === 'matched').length;
+        const review = plan.courses.filter(c => plan.mappings[c].status === 'review').length;
+        const isNew = plan.courses.filter(c => plan.mappings[c].status === 'new').length;
+        summaryEl.innerHTML = `
+          Parsed <span class="imp-num">${totalRounds}</span> rounds across
+          <span class="imp-num">${courseCount}</span> courses
+          (<span class="imp-num">${dateFirst}</span> → <span class="imp-num">${dateLast}</span>).<br>
+          <span class="imp-num">${auto}</span> courses auto-matched ·
+          <span class="imp-num">${review}</span> need review ·
+          <span class="imp-num">${isNew}</span> will be added as new.
+        `;
+
+        // Build the rows. Order: review → new → matched (review first since they need attention).
+        mappingsEl.innerHTML = '';
+        const order = ['review', 'new', 'matched'];
+        const sectionTitles = { review: 'Needs review', new: 'New courses (will be added to Rankings)', matched: 'Auto-matched' };
+        for (const status of order) {
+          const courses = plan.courses.filter(c => plan.mappings[c].status === status);
+          if (!courses.length) continue;
+          const title = document.createElement('div');
+          title.className = 'imp-section-title';
+          title.textContent = `${sectionTitles[status]} (${courses.length})`;
+          mappingsEl.appendChild(title);
+          for (const courseName of courses) {
+            mappingsEl.appendChild(buildImpRow(courseName, plan.mappings[courseName]));
+          }
+        }
+      }
+
+      function buildImpRow(courseName, mapping) {
+        const row = document.createElement('div');
+        row.className = 'imp-row';
+        row.dataset.courseName = courseName;
+
+        // Build the dropdown options: candidates + "Add as new" + "Skip"
+        const sel = document.createElement('select');
+        sel.className = 'imp-row-select';
+        if (mapping.status === 'review') sel.classList.add('unresolved');
+        // Top candidates with scores
+        for (const c of mapping.candidates) {
+          const o = document.createElement('option');
+          o.value = c.entry.courseId;
+          o.textContent = `${c.entry.name}  (${(c.score * 100).toFixed(0)}%)`;
+          if (c.entry.courseId === mapping.chosenCourseId) o.selected = true;
+          sel.appendChild(o);
+        }
+        // "Add as new" option
+        const newOpt = document.createElement('option');
+        newOpt.value = '__new__';
+        newOpt.textContent = '＋ Add as new course';
+        if (mapping.chosenCourseId === '__new__') newOpt.selected = true;
+        sel.appendChild(newOpt);
+        // Skip option
+        const skipOpt = document.createElement('option');
+        skipOpt.value = '__skip__';
+        skipOpt.textContent = '✕ Skip these rounds';
+        sel.appendChild(skipOpt);
+
+        sel.onchange = function() {
+          mapping.chosenCourseId = sel.value;
+          // Live update the status pill
+          if (sel.value === '__skip__') mapping.status = 'skip';
+          else if (sel.value === '__new__') mapping.status = 'new';
+          else mapping.status = 'matched';
+          pill.className = `imp-status-pill ${mapping.status}`;
+          pill.textContent = mapping.status;
+          sel.classList.remove('unresolved');
+        };
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'imp-row-name';
+        nameEl.textContent = courseName;
+        nameEl.title = courseName;
+
+        const countEl = document.createElement('div');
+        countEl.className = 'imp-row-count';
+        countEl.textContent = `${mapping.rounds.length} rd${mapping.rounds.length === 1 ? '' : 's'}`;
+
+        const pill = document.createElement('span');
+        pill.className = `imp-status-pill ${mapping.status}`;
+        pill.textContent = mapping.status;
+
+        row.appendChild(nameEl);
+        row.appendChild(countEl);
+        row.appendChild(sel);
+        row.appendChild(pill);
+        return row;
+      }
+
+      // File-input handler: parse, build plan, render review.
+      async function onImpFile() {
+        const f = document.getElementById('impFile').files[0];
+        const statusEl = document.getElementById('impStatus');
+        if (!f) return;
+        statusEl.innerHTML = '<span style="color:var(--cd);">Reading file…</span>';
+
+        try {
+          const text = await f.text();
+          const data = JSON.parse(text);
+
+          // Make sure PORTFOLIO is loaded for the fuzzy match against existing courses.
+          // Also pull Round History so we can dedup at commit time.
+          statusEl.innerHTML = '<span style="color:var(--cd);">Loading your portfolio for matching…</span>';
+          if (!PORTFOLIO.length) await loadPortfolio();
+          if (!ROUND_HISTORY_ALL) {
+            try { await loadAllRoundHistory(); } catch (e) {
+              // If Round History fetch fails, dedup will be empty (worst case: re-imports duplicate). Warn but proceed.
+              console.warn('Round history load failed during import prep:', e);
+            }
+          }
+
+          const rounds = parseAirdrop(data);
+          if (!rounds.length) {
+            statusEl.innerHTML = '<span style="color:var(--red);">No valid rounds found in the file.</span>';
+            return;
+          }
+
+          IMPORT_PLAN = buildImportPlan(rounds);
+          statusEl.innerHTML = `<span style="color:var(--ok);">✓</span> Parsed ${rounds.length} rounds across ${IMPORT_PLAN.courses.length} courses.`;
+          document.getElementById('impStep2').style.display = 'block';
+          document.getElementById('impStep3').style.display = 'block';
+          renderImportReview(IMPORT_PLAN);
+        } catch (err) {
+          console.error('Import parse failed:', err);
+          statusEl.innerHTML = `<span style="color:var(--red);">✗ ${err.message || err}</span>`;
+          IMPORT_PLAN = null;
+        }
+      }
+
+      // Default-tee assignment per round, using the configured early/late split + WN override.
+      function assignImportTee(playedAt, courseName, earlyTee, lateTee, cutoff) {
+        if (/washington\s+national/i.test(courseName)) return 'Blue / White combo';
+        return playedAt < cutoff ? earlyTee : lateTee;
+      }
+
+      // Build a 17-cell Round History row for an imported round.
+      // Looks up rating/slope from the matched PORTFOLIO entry for the assigned tee,
+      // computes differential if both are present. Otherwise leaves them blank.
+      function buildImportHistoryRow(round, courseId, courseName, tee, portfolioEntry) {
+        const roundId = `${courseId}-${round.epochMs}`;
+        const submittedAt = new Date().toISOString();
+        let rating = '', slope = '', differential = '';
+        if (portfolioEntry && tee) {
+          const teeLbl = tee.toLowerCase();
+          if (!teeLbl.includes('combo')) {
+            const teeKey = teeLbl.includes('blue') ? 'blue' :
+                           teeLbl.includes('black') ? 'black' :
+                           teeLbl.includes('white') ? 'white' : null;
+            const t = teeKey && portfolioEntry.tees && portfolioEntry.tees[teeKey];
+            if (t && t.r != null && t.s != null) {
+              rating = t.r;
+              slope = t.s;
+              const d = computeDifferential(round.strokes, t.r, t.s);
+              if (d != null) differential = d;
+            }
+          }
+        }
+        return [
+          roundId,
+          round.playedAt,
+          submittedAt,
+          courseId,
+          courseName,
+          round.holesPlayed,
+          round.strokes,
+          round.strokes,
+          round.holeStrokes.length ? JSON.stringify(round.holeStrokes) : '',
+          tee || '',
+          rating,
+          slope,
+          differential,
+          '',                          // partners — 18Birdies doesn't expose per-round
+          'Imported from 18Birdies',   // notes
+          round.birdies,
+          ''                           // eagleHole — 18Birdies has count but not which hole
+        ];
+      }
+
+      // Minimal Rankings row for a brand-new course discovered in the import.
+      // Just enough to make the course addressable; everything else fills in over time
+      // (NCRDB scraper for rating/slope, manual edits for tier/views/etc.).
+      function buildImportRankingsRow(courseName, courseId) {
+        return [
+          '', courseName, 'Mid C',     // rank, name, tier (default "Mid C" placeholder)
+          '', '',                       // rounds, record
+          '', '', '',                   // blue Y/R/S
+          '', '', '',                   // black Y/R/S
+          '', '', '',                   // white Y/R/S
+          '',                           // teeNotes
+          '',                           // views
+          '',                           // stats
+          'No', 'No', 'No',             // grass, oki, priv
+          '',                           // pace
+          'Imported from 18Birdies',    // notes
+          '', '', '',                   // firstPlayed, lastPlayed, avgScore
+          '',                           // teesPlayed
+          '', '',                       // greens, value
+          '',                           // partners
+          courseId,                     // courseId (col AD)
+          '',                           // par (col AE)
+          ''                            // walkability (col AF)
+        ];
+      }
+
+      // Commit handler: walk the plan, dedup, write everything.
+      async function runImport() {
+        if (!IMPORT_PLAN) return;
+        const btn = document.getElementById('impGoBtn');
+        const resEl = document.getElementById('impResult');
+        btn.disabled = true;
+
+        const earlyTee = document.getElementById('impTeeEarly').value;
+        const lateTee  = document.getElementById('impTeeLate').value;
+        const cutoff   = document.getElementById('impTeeCutoff').value || '2024-07-01';
+
+        try {
+          if (!accessToken) await getAccessToken();
+
+          // 1. Resolve courseIds for "new" mappings. Generate stable slugs.
+          const newCoursesToAdd = [];
+          for (const courseName of IMPORT_PLAN.courses) {
+            const m = IMPORT_PLAN.mappings[courseName];
+            if (m.status === 'new' && m.chosenCourseId === '__new__') {
+              const cid = generateUniqueCourseId(courseName);
+              m.chosenCourseId = cid;
+              newCoursesToAdd.push({ name: courseName, courseId: cid });
+            }
+          }
+
+          // 2. Append new-course Rankings rows. Batch in one append call.
+          let rankingsAdded = 0;
+          if (newCoursesToAdd.length) {
+            resEl.textContent = `Adding ${newCoursesToAdd.length} new course${newCoursesToAdd.length === 1 ? '' : 's'} to Rankings…`;
+            const rows = newCoursesToAdd.map(c => buildImportRankingsRow(c.name, c.courseId));
+            const appResp = await fetch(
+              `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Rankings!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+              { method: 'POST',
+                headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ values: rows }) }
+            );
+            if (appResp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+            if (!appResp.ok) throw new Error('Failed to add new courses: ' + (await appResp.text()));
+            rankingsAdded = rows.length;
+            // Reload PORTFOLIO so the freshly-added courses are addressable for round writes.
+            await loadPortfolio();
+          }
+
+          // 3. Build all Round History rows, dedup against existing Round History.
+          const existingByKey = {};
+          if (ROUND_HISTORY_ALL) {
+            ROUND_HISTORY_ALL.forEach(r => {
+              existingByKey[`${r.courseId}|${r.playedAt}`] = true;
+              if (r.roundId) existingByKey[`id:${r.roundId}`] = true;
+            });
+          }
+
+          const toWrite = [];
+          let skippedDup = 0, skippedByMapping = 0;
+          const skippedCourses = {};
+          for (const courseName of IMPORT_PLAN.courses) {
+            const m = IMPORT_PLAN.mappings[courseName];
+            if (m.status === 'skip' || m.chosenCourseId === '__skip__') {
+              skippedByMapping += m.rounds.length;
+              skippedCourses[courseName] = m.rounds.length;
+              continue;
+            }
+            const portfolioEntry = PORTFOLIO.find(p => p.courseId === m.chosenCourseId);
+            const resolvedName = portfolioEntry ? portfolioEntry.name : courseName;
+            for (const round of m.rounds) {
+              const dedupKey = `${m.chosenCourseId}|${round.playedAt}`;
+              const idKey = `id:${m.chosenCourseId}-${round.epochMs}`;
+              if (existingByKey[dedupKey] || existingByKey[idKey]) {
+                skippedDup++;
+                continue;
+              }
+              const tee = assignImportTee(round.playedAt, resolvedName, earlyTee, lateTee, cutoff);
+              toWrite.push(buildImportHistoryRow(round, m.chosenCourseId, resolvedName, tee, portfolioEntry));
+              existingByKey[dedupKey] = true; // prevent intra-batch dupes too
+            }
+          }
+
+          // 4. Write Round History rows in chunks (Sheets handles big batches but we chunk for resilience).
+          let written = 0;
+          const CHUNK = 200;
+          if (toWrite.length) {
+            for (let i = 0; i < toWrite.length; i += CHUNK) {
+              const slice = toWrite.slice(i, i + CHUNK);
+              resEl.textContent = `Writing rounds ${i + 1}–${Math.min(i + slice.length, toWrite.length)} of ${toWrite.length}…`;
+              await appendRoundHistory(slice);
+              written += slice.length;
+            }
+          }
+
+          // 5. Invalidate caches so the rest of the UI picks up the new data.
+          ROUND_HISTORY_ALL = null;
+          refreshHandicapIndex();
+
+          // 6. Render the result summary.
+          const lines = [
+            `<span style="color:var(--ok);">✓</span> Wrote <span style="color:var(--gold);font-weight:600;">${written}</span> rounds to Round History.`,
+            rankingsAdded ? `<span style="color:var(--ok);">✓</span> Added <span style="color:var(--gold);">${rankingsAdded}</span> new course${rankingsAdded === 1 ? '' : 's'} to Rankings.` : '',
+            skippedDup ? `<span style="color:var(--cd);">·</span> Skipped <span style="color:var(--cd);">${skippedDup}</span> duplicate${skippedDup === 1 ? '' : 's'} (already in Round History).` : '',
+            skippedByMapping ? `<span style="color:var(--cd);">·</span> Skipped <span style="color:var(--cd);">${skippedByMapping}</span> rounds from courses you chose to skip.` : '',
+            '',
+            `<span style="color:var(--cd);font-style:italic;">Next: head to Apps Script and run the NCRDB rating/slope backfill (when available) to fill in differentials for the rest. Differentials were computed for rounds where your course already had rating/slope stored for the assigned tee.</span>`
+          ].filter(Boolean);
+          resEl.innerHTML = lines.join('<br>');
+        } catch (err) {
+          console.error('Import failed:', err);
+          resEl.innerHTML = `<span style="color:var(--red);">✗ ${err.message || err}</span>`;
+        } finally {
+          btn.disabled = false;
+        }
       }
 
       // ── Phase 2: load PORTFOLIO from the Rankings tab ──
@@ -2059,7 +3280,7 @@
 
         if (idx >= 0) {
           const sheetRow = idx + 2; // header is row 1; data starts row 2
-          const range = `Rankings!A${sheetRow}:AE${sheetRow}`;
+          const range = `Rankings!A${sheetRow}:AF${sheetRow}`;
           const upd = await fetch(
             `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
             {
@@ -2123,6 +3344,9 @@
           }
         }
         renderRankings(PORTFOLIO);
+        // Phase 2.5+: refresh the handicap index card. Fire-and-forget — failures
+        // are scoped to the card itself, won't break the rankings render.
+        refreshHandicapIndex();
       }
 
       function renderRankings(entries) {
@@ -2166,9 +3390,21 @@
             const partners    = c.partners || '';
             const maxBirdies  = c.mostBirdies ? c.mostBirdies : '—';
             const eagles      = c.eagles && c.eagles.length ? c.eagles.map(h => `Hole ${h}`).join(', ') : 'None';
+            // Phase 2.5: walkability rendered as filled/empty stars; "—" when unrated.
+            const walkability = c.walkability;
+            const walkStars   = walkability
+              ? '★'.repeat(walkability) + '☆'.repeat(5 - walkability)
+              : '—';
+            // Phase 2.5: pace likewise — null when unrated (or unmigrated legacy "" cells).
+            const paceRating = c.pace;
+            const paceStars  = paceRating
+              ? '★'.repeat(paceRating) + '☆'.repeat(5 - paceRating)
+              : '—';
 
             const row = document.createElement('div');
             row.className = 'course-row';
+            // courseId is the key for the round-history lookup on expand.
+            row.dataset.courseId = c.courseId || '';
 
             row.innerHTML = `
         <div class="course-row-header" onclick="toggleCourseDetail(this.parentElement)">
@@ -2188,8 +3424,11 @@
             <div class="detail-item"><div class="detail-label">Eagles</div><div class="detail-val">${eagles}</div></div>
             <div class="detail-item"><div class="detail-label">Avg Score</div><div class="detail-val">${avgScore||'—'}</div></div>
             <div class="detail-item"><div class="detail-label">First Played</div><div class="detail-val">${firstPlayed||'—'}</div></div>
+            <div class="detail-item"><div class="detail-label">Walkability</div><div class="detail-val ${walkability?'gold':''}">${walkStars}</div></div>
+            <div class="detail-item"><div class="detail-label">Pace of Play</div><div class="detail-val ${paceRating?'gold':''}">${paceStars}</div></div>
           </div>
           ${partners?`<div class="detail-tags"><div class="dtag ok">👥 ${partners}</div></div>`:''}
+          <div class="rounds-log" data-populated="false"></div>
           <button class="log-round-btn" onclick="prefillAndLog('${name.replace(/'/g,"\\'")}')">+ Log a Round Here</button>
         </div>`;
 
@@ -2215,8 +3454,81 @@
         return m[t] || t;
       }
 
-      function toggleCourseDetail(row) {
+      // Phase 2.5: expanding a course row now also lazy-loads its round history.
+      // First expand of any course in the session triggers a single fetch of
+      // ALL Round History (cached in ROUND_HISTORY_ALL); subsequent expands hit
+      // the cache and render instantly. Failures are scoped to the row's log
+      // container — the rest of the Rankings view stays usable.
+      async function toggleCourseDetail(row) {
+        const wasOpen = row.classList.contains('open');
         row.classList.toggle('open');
+        if (wasOpen) return; // we just collapsed; nothing else to do
+
+        const courseId = row.dataset.courseId;
+        if (!courseId) return; // legacy row with no courseId — bail quietly
+
+        const logEl = row.querySelector('.rounds-log');
+        if (!logEl || logEl.dataset.populated === 'true') return;
+
+        const course = PORTFOLIO.find(p => p.courseId === courseId);
+        if (!course) return;
+
+        // Show a tiny inline spinner — re-uses the global .load-spinner styles.
+        logEl.innerHTML = `
+          <div class="rounds-log-title">All Rounds</div>
+          <div class="round-empty">
+            <span class="round-spinner"></span>Loading rounds…
+          </div>`;
+        try {
+          if (!ROUND_HISTORY_ALL) await loadAllRoundHistory();
+          renderCourseRoundsLog(logEl, course);
+          logEl.dataset.populated = 'true';
+        } catch (err) {
+          console.warn('Round history load failed for', courseId, err);
+          logEl.innerHTML = `
+            <div class="rounds-log-title">All Rounds</div>
+            <div class="round-empty" style="color:var(--red);">Couldn't load: ${err.message || err}</div>`;
+          // Leave data-populated=false so the next expand retries.
+        }
+      }
+
+      // Render the per-course rounds list into an existing .rounds-log container.
+      // Each entry: date · score(+toPar) · tees · differential · partners.
+      // Backfilled rounds may have blank tees/rating/slope/partners — those render as "—".
+      function renderCourseRoundsLog(logEl, course) {
+        const rounds = getRoundsForCourse(course.courseId);
+        if (!rounds.length) {
+          logEl.innerHTML = `
+            <div class="rounds-log-title">All Rounds (0)</div>
+            <div class="round-empty">No detailed round history yet. New rounds you log will appear here.</div>`;
+          return;
+        }
+        const par = course.par;
+        const items = rounds.map(r => {
+          const score = parseInt(r.score);
+          let toPar = '';
+          if (par && !isNaN(score)) {
+            const d = score - par;
+            toPar = ` (${d > 0 ? '+' + d : d === 0 ? 'E' : d})`;
+          }
+          const diffStr = (r.differential !== '' && r.differential != null)
+            ? (typeof r.differential === 'number' ? r.differential.toFixed(1) : r.differential)
+            : '—';
+          const partnersHtml = r.partners
+            ? `<span class="round-partners" title="${r.partners}">${r.partners}</span>`
+            : '';
+          return `
+            <div class="round-entry">
+              <span class="round-date">${r.playedAt || '—'}</span>
+              <span class="round-score">${isNaN(score) ? '—' : score}${toPar}</span>
+              <span class="round-tees">${r.teesPlayed || '—'}</span>
+              <span class="round-diff">${diffStr}</span>
+              ${partnersHtml}
+            </div>`;
+        }).join('');
+        logEl.innerHTML = `
+          <div class="rounds-log-title">All Rounds (${rounds.length})</div>
+          ${items}`;
       }
 
       function prefillAndLog(name) {
@@ -2404,6 +3716,17 @@
           setStars('value', c.value);
           document.getElementById('valueRef').textContent = `avg: ${c.value}/5`;
         }
+        // Phase 2.5: pre-fill stored walkability rating, if any.
+        if (c.walkability != null && c.walkability > 0) {
+          setStars('walk', c.walkability);
+          document.getElementById('walkRef').textContent = `stored: ${c.walkability}/5`;
+        }
+        // Phase 2.5: pre-fill stored pace rating (migrated from Good/Bad toggle).
+        // parsePortfolioRow already coerced any legacy "Good"/"Bad" string to 4/2.
+        if (c.pace != null && c.pace > 0) {
+          setStars('pace', c.pace);
+          document.getElementById('paceRef').textContent = `stored: ${c.pace}/5`;
+        }
         // Phase 2: auto-fill rating/slope if tees already selected
         autoFillRatingSlope();
         document.getElementById('fillPanel').style.display = 'none';
@@ -2424,9 +3747,15 @@
         slopeEl.placeholder  = '132';
         if (!currentPortfolioEntry || !tees) return;
         const isCombo = tees.toLowerCase().includes('combo');
-        if (isCombo) {
-          // Combo tees: leave blank, flag with gold border + prompt placeholder.
-          // We do NOT auto-average parent sets — combos are independently rated.
+        const { rating, slope } = isCombo
+          ? { rating: null, slope: null }
+          : lookupTeeStats(currentPortfolioEntry, tees);
+        if (rating == null || slope == null) {
+          // Either combo tees (intentionally not stored) or a tee set the
+          // course hasn't had rating/slope entered for yet. Flag the inputs
+          // with a gold border + scorecard prompt; the user types the actual
+          // values, and at submit time we'll persist them back to the course's
+          // tee columns so the next round auto-fills.
           ratingEl.placeholder = 'enter from scorecard';
           slopeEl.placeholder  = 'enter from scorecard';
           ratingEl.style.borderColor = 'var(--gold)';
@@ -2434,9 +3763,8 @@
           updateDifferentialLive();
           return;
         }
-        const { rating, slope } = lookupTeeStats(currentPortfolioEntry, tees);
-        if (rating != null && !ratingEl.value) ratingEl.value = rating;
-        if (slope  != null && !slopeEl.value)  slopeEl.value  = slope;
+        if (!ratingEl.value) ratingEl.value = rating;
+        if (!slopeEl.value)  slopeEl.value  = slope;
         updateDifferentialLive();
       }
 
@@ -2533,10 +3861,31 @@
         4: 'Good',
         5: 'Excellent'
       };
+      // Phase 2.5: walkability uses a domain-specific scale, not the generic
+      // quality scale. 5 = easy walk (flat, short cart-to-tee), 1 = brutal hills.
+      const walkLabels = {
+        1: 'Very Hilly',
+        2: 'Hilly',
+        3: 'Moderate',
+        4: 'Walkable',
+        5: 'Easy Walk'
+      };
+      // Phase 2.5: pace migrated from Good/Bad toggle to 1–5. Anchors:
+      // 2 = legacy "Bad", 4 = legacy "Good"; the migration backfills both.
+      const paceLabels = {
+        1: 'Painful',
+        2: 'Slow',
+        3: 'Average',
+        4: 'Good',
+        5: 'Excellent'
+      };
 
       function setStars(type, n) {
+        let labels = starLabels;
+        if (type === 'walk') labels = walkLabels;
+        else if (type === 'pace') labels = paceLabels;
         document.getElementById(`${type}Val`).value = n;
-        document.getElementById(`${type}Label`).textContent = starLabels[n] || '—';
+        document.getElementById(`${type}Label`).textContent = labels[n] || '—';
         document.getElementById(`${type}Stars`).querySelectorAll('.star').forEach((s, i) => s.classList.toggle('on', i < n));
       }
 
@@ -2944,8 +4293,9 @@
         });
       }
 
-      // Build the 31-column Rankings rollup row (A..AE).
-      // Columns 1-29 unchanged from Phase 1; columns 30-31 are courseId + par.
+      // Build the 32-column Rankings rollup row (A..AF).
+      // Columns 1-29 unchanged from Phase 1; columns 30-31 are courseId + par
+      // (Phase 2); column 32 is walkability (Phase 2.5).
       function buildRow() {
         const name = document.getElementById('cName').value.trim();
         const isNew = document.getElementById('newCourseChk').checked;
@@ -2968,9 +4318,12 @@
         const curScore = parseInt(document.getElementById('recScore').value);
         if (!isNaN(curScore)) allScores.push(curScore);
         const avg = allScores.length ? (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1) : '';
-        const goodPace = document.getElementById('goodPace')?.checked;
-        const badPace = document.getElementById('pace')?.checked;
-        const paceVal = badPace ? 'Bad' : goodPace ? 'Good' : '';
+        // Phase 2.5: pace is now a 1–5 integer (was "Good"/"Bad"/""). Read from
+        // the star row; fall back to the stored value when the user didn't touch
+        // it (mirrors walkability's preserve-prior behavior).
+        const paceStar = parseInt(document.getElementById('paceVal')?.value) || 0;
+        const paceInt = paceStar || (currentPortfolioEntry?.pace ?? 0);
+        const paceVal = paceInt > 0 ? paceInt : '';
         const greens = document.getElementById('greensVal').value;
         const value = document.getElementById('valueVal').value;
         const tees = document.getElementById('teesPlayed').value;
@@ -2978,17 +4331,43 @@
         // Phase 2: stable courseId — reuse if existing, generate-with-collision-suffix if new.
         const courseId = currentPortfolioEntry?.courseId || generateUniqueCourseId(name);
         const par = document.getElementById('par').value || '';
+        // Phase 2.5: walkability — integer 1–5 in the sheet, blank if unrated this submit.
+        // Preserves prior rating if the user didn't touch the stars (currentPortfolioEntry holds it).
+        const walkRaw = parseInt(document.getElementById('walkVal').value) || 0;
+        const walkability = walkRaw > 0
+          ? walkRaw
+          : (currentPortfolioEntry?.walkability != null ? currentPortfolioEntry.walkability : '');
         // When upserting, preserve existing tee data if the user didn't re-enter it.
         const tee = (id) => document.getElementById(id)?.value || (currentPortfolioEntry ? '' : '');
-        const blueY = tee('blueY') || (currentPortfolioEntry?.tees?.blue?.y ?? '');
-        const blueR = tee('blueR') || (currentPortfolioEntry?.tees?.blue?.r ?? '');
-        const blueS = tee('blueS') || (currentPortfolioEntry?.tees?.blue?.s ?? '');
-        const blkY  = tee('blackY') || (currentPortfolioEntry?.tees?.black?.y ?? '');
-        const blkR  = tee('blackR') || (currentPortfolioEntry?.tees?.black?.r ?? '');
-        const blkS  = tee('blackS') || (currentPortfolioEntry?.tees?.black?.s ?? '');
-        const whtY  = tee('whiteY') || (currentPortfolioEntry?.tees?.white?.y ?? '');
-        const whtR  = tee('whiteR') || (currentPortfolioEntry?.tees?.white?.r ?? '');
-        const whtS  = tee('whiteS') || (currentPortfolioEntry?.tees?.white?.s ?? '');
+        let blueY = tee('blueY') || (currentPortfolioEntry?.tees?.blue?.y ?? '');
+        let blueR = tee('blueR') || (currentPortfolioEntry?.tees?.blue?.r ?? '');
+        let blueS = tee('blueS') || (currentPortfolioEntry?.tees?.blue?.s ?? '');
+        let blkY  = tee('blackY') || (currentPortfolioEntry?.tees?.black?.y ?? '');
+        let blkR  = tee('blackR') || (currentPortfolioEntry?.tees?.black?.r ?? '');
+        let blkS  = tee('blackS') || (currentPortfolioEntry?.tees?.black?.s ?? '');
+        let whtY  = tee('whiteY') || (currentPortfolioEntry?.tees?.white?.y ?? '');
+        let whtR  = tee('whiteR') || (currentPortfolioEntry?.tees?.white?.r ?? '');
+        let whtS  = tee('whiteS') || (currentPortfolioEntry?.tees?.white?.s ?? '');
+
+        // Phase 2: backfill tee rating/slope for the tee played, if the user
+        // manually entered them this round and the stored cell was empty.
+        // Combos are intentionally excluded (no single-tee column to store to).
+        const ratingUsed = document.getElementById('ratingUsed')?.value;
+        const slopeUsed  = document.getElementById('slopeUsed')?.value;
+        const teesLbl    = (tees || '').toLowerCase();
+        const isCombo    = teesLbl.includes('combo');
+        if (!isCombo && ratingUsed && slopeUsed) {
+          if (teesLbl.includes('blue')) {
+            if (!blueR) blueR = ratingUsed;
+            if (!blueS) blueS = slopeUsed;
+          } else if (teesLbl.includes('black')) {
+            if (!blkR) blkR = ratingUsed;
+            if (!blkS) blkS = slopeUsed;
+          } else if (teesLbl.includes('white')) {
+            if (!whtR) whtR = ratingUsed;
+            if (!whtS) whtS = slopeUsed;
+          }
+        }
         return ['', fullName, tier,
           document.getElementById('rounds').value || '', buildRec(),
           blueY, blueR, blueS,
@@ -3001,7 +4380,7 @@
           paceVal, document.getElementById('notes')?.value.trim() || '',
           allDates[0] || '', allDates[allDates.length - 1] || '', avg,
           tees, greens > 0 ? `${greens}/5` : '', value > 0 ? `${value}/5` : '', partners.join(', '),
-          courseId, par
+          courseId, par, walkability
         ];
       }
 
@@ -3120,6 +4499,14 @@
           //    see the new state (no full page reload required).
           try { await loadPortfolio(); } catch (e) { console.warn('Portfolio reload failed:', e); }
 
+          // Phase 2.5: drop the round-history cache so the next expand picks up
+          // the rounds we just wrote. Re-fetch is lazy — only triggers on user
+          // expand, so no immediate cost.
+          ROUND_HISTORY_ALL = null;
+          // Phase 2.5+: refresh handicap index — non-blocking, fire-and-forget.
+          // Will re-fetch ROUND_HISTORY_ALL and re-render the card.
+          refreshHandicapIndex();
+
           const verb = upsertResult.action === 'updated' ? 'updated' : 'added';
           const msg = `✓ Rankings row ${verb}. ${historyRows.length} round${historyRows.length===1?'':'s'} written to Round History.\n\nRun the Apps Script to re-sort & re-color when convenient.`;
           showMsg('ok', msg);
@@ -3176,6 +4563,7 @@
       // Phase 2: warm PORTFOLIO in the background. If the user has a cached
       // token in sessionStorage this is silent and fast; otherwise it will
       // queue auth on the first Rankings-tab open or first submit.
+      // Phase 2.5+: also warm Round History and refresh the handicap card.
       (async function warmPortfolio() {
         if (!getCachedToken()) return; // defer auth to first user action
         try {
@@ -3183,6 +4571,8 @@
           // If the Rankings tab is currently active, re-render with fresh data.
           const rankingsActive = document.getElementById('page-rankings')?.classList.contains('active');
           if (rankingsActive) renderRankings(PORTFOLIO);
+          // Fire-and-forget the handicap fetch — no UI blocking even if it lags.
+          refreshHandicapIndex();
         } catch (err) {
           console.warn('Background portfolio load failed (will retry on user action):', err);
         }
