@@ -397,6 +397,148 @@
     .imp-status-pill.new     { background: var(--gold-pale); border: 1px solid var(--gold-dim); color: var(--gold); }
     .imp-status-pill.skip    { background: rgba(192, 57, 43, .12); border: 1px solid var(--red); color: var(--red); }
 
+    /* Per-course sparkline (Phase 2.5+) */
+    .course-sparkline {
+      display: block;
+      width: 100%;
+      height: 56px;
+      margin: 4px 0 10px 0;
+      overflow: visible;
+    }
+
+    /* Round editor modal (Phase 2.5+) */
+    .re-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .75);
+      z-index: 200;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 6vh 16px;
+      overflow-y: auto;
+    }
+    .re-overlay.open { display: flex; }
+
+    .re-modal {
+      background: var(--gc);
+      border: 1px solid var(--gold-dim);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .re-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gold-dim);
+      background: var(--gr);
+      border-radius: 10px 10px 0 0;
+    }
+
+    .re-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      color: var(--gold);
+    }
+
+    .re-close {
+      background: transparent;
+      border: 0;
+      color: var(--cd);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .re-close:hover { color: var(--cream); }
+
+    .re-body {
+      padding: 14px 16px;
+    }
+
+    .re-course {
+      font-size: 12px;
+      color: var(--gold);
+      margin-bottom: 12px;
+      letter-spacing: .04em;
+    }
+
+    .re-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 10px;
+    }
+
+    .re-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .re-field.re-full {
+      grid-column: 1 / -1;
+    }
+
+    .re-field label {
+      font-size: 9px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--cd);
+    }
+
+    .re-field input,
+    .re-field select,
+    .re-field textarea {
+      background: var(--gd);
+      border: 1px solid var(--gb);
+      border-radius: 5px;
+      color: var(--cream);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 7px 9px;
+      outline: none;
+    }
+    .re-field input:focus, .re-field select:focus, .re-field textarea:focus { border-color: var(--gold); }
+
+    .re-msg {
+      margin-top: 10px;
+      font-size: 11px;
+      min-height: 14px;
+    }
+    .re-msg.ok  { color: var(--ok); }
+    .re-msg.err { color: var(--red); }
+
+    .re-footer {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--gold-dim);
+      align-items: center;
+    }
+
+    .re-delete, .re-cancel, .re-save {
+      padding: 8px 14px;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: .04em;
+      cursor: pointer;
+      border: 1px solid var(--gold-dim);
+      background: transparent;
+      color: var(--cd);
+    }
+    .re-delete { color: var(--red); border-color: rgba(192, 57, 43, .4); }
+    .re-delete:hover { background: rgba(192, 57, 43, .12); }
+    .re-cancel:hover { color: var(--cream); background: var(--gold-pale); }
+    .re-save { background: var(--gold); color: var(--gd); border-color: var(--gold); font-weight: 600; }
+    .re-save:hover { filter: brightness(1.08); }
+    .re-save:disabled { opacity: .55; cursor: wait; }
+
     .load-msg {
       text-align: center;
       padding: 40px 20px;
@@ -797,16 +939,17 @@
     }
 
     .sr {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
+      /* position:fixed (not absolute) so the dropdown escapes the parent
+         .card's overflow:hidden clip. Coordinates are pinned to the search
+         input each time the dropdown is shown — see positionSearchResults(). */
+      position: fixed;
       background: var(--gr);
       border: 1px solid var(--gb);
       border-radius: 6px;
       z-index: 100;
-      max-height: 260px;
+      max-height: 60vh;
       overflow-y: auto;
+      overscroll-behavior: contain;
       display: none;
       box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
     }
@@ -2187,6 +2330,54 @@
         </div>
       </div>
 
+      <!-- Phase 2.5+: Round editor modal (edit a logged round in place) -->
+      <div class="re-overlay" id="reOverlay" onclick="if(event.target===this)closeRoundEditor()">
+        <div class="re-modal" role="dialog" aria-modal="true" aria-labelledby="reTitle">
+          <div class="re-header">
+            <span class="re-title" id="reTitle">Edit Round</span>
+            <button class="re-close" onclick="closeRoundEditor()" aria-label="Close">✕</button>
+          </div>
+          <div class="re-body">
+            <div class="re-course" id="reCourseName"></div>
+            <div class="re-grid">
+              <div class="re-field"><label>Date</label><input type="date" id="reDate"></div>
+              <div class="re-field"><label>Holes</label>
+                <select id="reHoles"><option value="18">18</option><option value="9">9</option></select>
+              </div>
+              <div class="re-field"><label>Strokes</label><input type="number" id="reStrokes" min="0"></div>
+              <div class="re-field"><label>Birdies</label><input type="number" id="reBirdies" min="0"></div>
+              <div class="re-field re-full"><label>Tees Played</label>
+                <select id="reTees">
+                  <option value=""></option>
+                  <option value="Black (Tips)">Black (Tips)</option>
+                  <option value="Blue">Blue</option>
+                  <option value="White">White</option>
+                  <option value="Black / Blue combo">Black / Blue combo</option>
+                  <option value="Blue / White combo">Blue / White combo</option>
+                </select>
+              </div>
+              <div class="re-field"><label>Rating</label><input type="number" id="reRating" step="0.1" min="0"></div>
+              <div class="re-field"><label>Slope</label><input type="number" id="reSlope" min="55" max="155"></div>
+              <div class="re-field re-full">
+                <label>Differential <span id="reDiffPreview" style="color:var(--cd);font-style:italic;font-size:10px;"></span></label>
+                <input type="number" id="reDiff" step="0.1" placeholder="auto-computed from strokes/rating/slope">
+              </div>
+              <div class="re-field re-full"><label>Partners</label><input type="text" id="rePartners" placeholder="Reid, Tom, …"></div>
+              <div class="re-field"><label>Eagle (hole #)</label><input type="text" id="reEagle" placeholder="hole # or blank"></div>
+              <div class="re-field"><label> </label></div>
+              <div class="re-field re-full"><label>Notes</label><textarea id="reNotes" rows="2"></textarea></div>
+            </div>
+            <div id="reMsg" class="re-msg"></div>
+          </div>
+          <div class="re-footer">
+            <button class="re-delete" onclick="deleteRound()">Delete</button>
+            <div style="flex:1;"></div>
+            <button class="re-cancel" onclick="closeRoundEditor()">Cancel</button>
+            <button class="re-save sb" onclick="saveRoundEdit()">Save</button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /app -->
 
     <script>
@@ -2387,9 +2578,12 @@
           throw new Error(e.error?.message || 'Round History read failed');
         }
         const data = await resp.json();
+        // Phase 2.5+: attach _sheetRow (1-indexed, +2 for header + 0-indexed array)
+        // so the round editor can PATCH the right cell range. Filter AFTER mapping
+        // so the sheet-row indices match the original positions in the response.
         ROUND_HISTORY_ALL = (data.values || [])
-          .filter(r => r && r[0]) // require a roundId
-          .map(parseRoundHistoryRow);
+          .map((r, i) => Object.assign(parseRoundHistoryRow(r), { _sheetRow: i + 2 }))
+          .filter(r => r.roundId);
         return ROUND_HISTORY_ALL;
       }
 
@@ -3001,6 +3195,222 @@
         }
       }
 
+      // ══════════════════════════════════════════════════════════════
+      // Phase 2.5+: Round editor (tap a row in the rounds-log to edit)
+      // ══════════════════════════════════════════════════════════════
+      // Loads the round from ROUND_HISTORY_ALL (which now carries _sheetRow),
+      // populates the modal form, and on save PUTs the updated 17-cell row
+      // back to the specific Round History range. Delete clears the row's
+      // cells (we don't actually remove the row — Google Sheets append/upsert
+      // patterns elsewhere assume stable row positions). A subsequent reload
+      // filters by roundId so deleted rounds vanish from ROUND_HISTORY_ALL.
+
+      let RE_EDITING = null; // the round being edited; null when modal closed
+
+      function openRoundEditor(roundId) {
+        if (!roundId || !ROUND_HISTORY_ALL) return;
+        const round = ROUND_HISTORY_ALL.find(r => r.roundId === roundId);
+        if (!round) return;
+        RE_EDITING = round;
+
+        // Populate fields
+        document.getElementById('reCourseName').textContent = round.courseName || '(unknown course)';
+        document.getElementById('reDate').value     = round.playedAt || '';
+        document.getElementById('reHoles').value    = round.holesPlayed || '18';
+        document.getElementById('reStrokes').value  = round.strokes || '';
+        document.getElementById('reBirdies').value  = round.birdies || '';
+        document.getElementById('reTees').value     = round.teesPlayed || '';
+        document.getElementById('reRating').value   = round.rating || '';
+        document.getElementById('reSlope').value    = round.slope || '';
+        document.getElementById('reDiff').value     = round.differential !== '' ? round.differential : '';
+        document.getElementById('rePartners').value = round.partners || '';
+        document.getElementById('reEagle').value    = round.eagleHole || '';
+        document.getElementById('reNotes').value    = round.notes || '';
+        document.getElementById('reMsg').textContent = '';
+        document.getElementById('reMsg').className = 're-msg';
+
+        updateRoundEditorDiffPreview();
+        document.getElementById('reOverlay').classList.add('open');
+      }
+
+      function closeRoundEditor() {
+        document.getElementById('reOverlay').classList.remove('open');
+        RE_EDITING = null;
+      }
+
+      // Live differential preview as the user edits strokes/rating/slope.
+      // Doesn't overwrite the user's manual diff entry — just shows what the
+      // formula would give. Used as a hint, not as authoritative.
+      function updateRoundEditorDiffPreview() {
+        const s = parseInt(document.getElementById('reStrokes').value);
+        const r = parseFloat(document.getElementById('reRating').value);
+        const sl = parseInt(document.getElementById('reSlope').value);
+        const el = document.getElementById('reDiffPreview');
+        if (!isNaN(s) && !isNaN(r) && !isNaN(sl)) {
+          const d = computeDifferential(s, r, sl);
+          if (d != null) {
+            el.textContent = `auto: ${d.toFixed(1)}`;
+            return;
+          }
+        }
+        el.textContent = '';
+      }
+      // Wire diff preview to the three inputs (set up once)
+      document.addEventListener('DOMContentLoaded', () => {
+        ['reStrokes', 'reRating', 'reSlope'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.addEventListener('input', updateRoundEditorDiffPreview);
+        });
+      });
+      // DOMContentLoaded may have already fired by the time this script runs
+      // (we're at end-of-body). Wire it directly too as a safety net.
+      ['reStrokes', 'reRating', 'reSlope'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el._diffWired) {
+          el.addEventListener('input', updateRoundEditorDiffPreview);
+          el._diffWired = true;
+        }
+      });
+
+      async function saveRoundEdit() {
+        if (!RE_EDITING) return;
+        const msgEl = document.getElementById('reMsg');
+        const btn = document.querySelector('.re-save');
+        btn.disabled = true;
+        msgEl.className = 're-msg'; msgEl.textContent = 'Saving…';
+
+        try {
+          if (!accessToken) await getAccessToken();
+
+          // Read fields
+          const playedAt    = document.getElementById('reDate').value;
+          const holesPlayed = parseInt(document.getElementById('reHoles').value) || 18;
+          const strokes     = parseInt(document.getElementById('reStrokes').value);
+          const birdies     = parseInt(document.getElementById('reBirdies').value) || 0;
+          const teesPlayed  = document.getElementById('reTees').value;
+          const rating      = parseFloat(document.getElementById('reRating').value);
+          const slope       = parseInt(document.getElementById('reSlope').value);
+          const diffOverride= document.getElementById('reDiff').value;
+          const partners    = document.getElementById('rePartners').value.trim();
+          const eagleHole   = document.getElementById('reEagle').value.trim();
+          const notes       = document.getElementById('reNotes').value.trim();
+
+          if (isNaN(strokes) || !playedAt) {
+            throw new Error('Date and strokes are required');
+          }
+
+          // Differential: prefer explicit override, otherwise compute.
+          let differential = '';
+          if (diffOverride !== '') {
+            differential = parseFloat(diffOverride);
+          } else if (!isNaN(rating) && !isNaN(slope)) {
+            const d = computeDifferential(strokes, rating, slope);
+            if (d != null) differential = d;
+          }
+
+          // Build 17-cell Round History row. Preserve original roundId, courseId,
+          // courseName, holeStrokes, and submittedAt — these aren't editable from
+          // the form. (Course can't change because the row's identity is tied to
+          // its courseId; user wants to re-attribute a round, they delete + re-log.)
+          const row = [
+            RE_EDITING.roundId,                       // 0  roundId (preserve)
+            playedAt,                                 // 1  playedAt
+            RE_EDITING.submittedAt || '',             // 2  submittedAt (preserve)
+            RE_EDITING.courseId,                      // 3  courseId (preserve)
+            RE_EDITING.courseName,                    // 4  courseName (preserve)
+            holesPlayed,                              // 5
+            strokes,                                  // 6  strokes
+            strokes,                                  // 7  score (mirror of strokes)
+            RE_EDITING.holeStrokes || '',             // 8  holeStrokes (preserve)
+            teesPlayed,                               // 9
+            isNaN(rating) ? '' : rating,              // 10
+            isNaN(slope)  ? '' : slope,               // 11
+            differential === '' || isNaN(differential) ? '' : differential, // 12
+            partners,                                 // 13
+            notes || RE_EDITING.notes || '',          // 14
+            birdies,                                  // 15
+            eagleHole                                 // 16
+          ];
+
+          const range = `Round History!A${RE_EDITING._sheetRow}:Q${RE_EDITING._sheetRow}`;
+          const resp = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+            { method: 'PUT',
+              headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ values: [row] }) }
+          );
+          if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+          if (!resp.ok) {
+            const e = await resp.json();
+            throw new Error(e.error?.message || 'Save failed');
+          }
+
+          msgEl.className = 're-msg ok';
+          msgEl.textContent = '✓ Saved';
+
+          // Invalidate caches so subsequent reads (rankings expand, handicap card) re-fetch.
+          ROUND_HISTORY_ALL = null;
+          refreshHandicapIndex();
+
+          // If the user has a Rankings course-detail open, re-render its rounds-log.
+          // Cheap: just clear the populated flag so the next expand re-fetches.
+          document.querySelectorAll('.course-row.open .rounds-log').forEach(el => {
+            el.dataset.populated = 'false';
+          });
+
+          setTimeout(closeRoundEditor, 600);
+        } catch (err) {
+          console.error('Save round edit failed:', err);
+          msgEl.className = 're-msg err';
+          msgEl.textContent = `✗ ${err.message || err}`;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      // Delete: zero out the 17 cells. Keeps the row position stable (so other
+      // rounds' _sheetRow indices stay correct in subsequent reads) but the row
+      // gets filtered out by `r.roundId` truthy check during parse.
+      async function deleteRound() {
+        if (!RE_EDITING) return;
+        if (!confirm(`Delete this round at ${RE_EDITING.courseName} on ${RE_EDITING.playedAt}?\n\nThis can't be undone from the app.`)) return;
+        const msgEl = document.getElementById('reMsg');
+        const btn = document.querySelector('.re-save');
+        btn.disabled = true;
+        msgEl.className = 're-msg'; msgEl.textContent = 'Deleting…';
+
+        try {
+          if (!accessToken) await getAccessToken();
+          const range = `Round History!A${RE_EDITING._sheetRow}:Q${RE_EDITING._sheetRow}`;
+          const resp = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}:clear`,
+            { method: 'POST',
+              headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (resp.status === 401) { clearCachedToken(); throw new Error('Auth expired'); }
+          if (!resp.ok) {
+            const e = await resp.json();
+            throw new Error(e.error?.message || 'Delete failed');
+          }
+          msgEl.className = 're-msg ok';
+          msgEl.textContent = '✓ Deleted';
+
+          ROUND_HISTORY_ALL = null;
+          refreshHandicapIndex();
+          document.querySelectorAll('.course-row.open .rounds-log').forEach(el => {
+            el.dataset.populated = 'false';
+          });
+          setTimeout(closeRoundEditor, 600);
+        } catch (err) {
+          console.error('Delete failed:', err);
+          msgEl.className = 're-msg err';
+          msgEl.textContent = `✗ ${err.message || err}`;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+
       // Default-tee assignment per round, using the configured early/late split + WN override.
       function assignImportTee(playedAt, courseName, earlyTee, lateTee, cutoff) {
         if (/washington\s+national/i.test(courseName)) return 'Blue / White combo';
@@ -3492,6 +3902,65 @@
         }
       }
 
+      // Phase 2.5+: SVG sparkline of scores-over-time for a single course.
+      // Time-proportional x-axis (preserves play-frequency texture), score
+      // y-axis with par as a dashed reference line if known. Lower scores
+      // = higher on screen (golf convention). Skips if fewer than 2 valid
+      // scores or all scores are equal.
+      function buildCourseSparkline(rounds, par) {
+        const pts = rounds.slice().reverse() // existing list is newest-first; chart wants oldest-first
+          .map(r => ({ date: r.playedAt, score: parseInt(r.score) }))
+          .filter(p => p.date && !isNaN(p.score));
+        if (pts.length < 2) return '';
+        const W = 400, H = 56;
+        const padX = 6, padY = 8;
+        const usableW = W - padX * 2;
+        const usableH = H - padY * 2;
+
+        const scores = pts.map(p => p.score);
+        let minS = Math.min(...scores);
+        let maxS = Math.max(...scores);
+        // Pad value axis to give the line breathing room and include par if it's outside the range.
+        if (par && par > 0) {
+          minS = Math.min(minS, par);
+          maxS = Math.max(maxS, par);
+        }
+        const range = maxS - minS;
+        if (range < 1) { minS -= 1; maxS += 1; }
+        const span = maxS - minS;
+
+        const t0 = Date.parse(pts[0].date);
+        const t1 = Date.parse(pts[pts.length - 1].date);
+        const dateSpan = Math.max(1, t1 - t0);
+
+        const toX = d => padX + ((Date.parse(d) - t0) / dateSpan) * usableW;
+        const toY = s => padY + ((s - minS) / span) * usableH; // higher score → lower on screen (golf: lower = better = higher up)
+        // Wait — y inversion: golf lower=better. Best score = top. So map minS→top, maxS→bottom.
+        // y = padY + ((s - minS) / span) * usableH puts minS at padY (top), maxS at bottom. Correct.
+
+        const pathD = pts.map((p, i) =>
+          (i === 0 ? 'M' : 'L') + toX(p.date).toFixed(1) + ',' + toY(p.score).toFixed(1)
+        ).join(' ');
+
+        const best = pts.reduce((a, b) => a.score <= b.score ? a : b);
+        const last = pts[pts.length - 1];
+        const parLine = (par && par >= minS && par <= maxS)
+          ? `<line x1="${padX}" y1="${toY(par).toFixed(1)}" x2="${(W - padX).toFixed(1)}" y2="${toY(par).toFixed(1)}" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="2,3"/>`
+          : '';
+        const parLabel = (par && par >= minS && par <= maxS)
+          ? `<text x="${(W - padX - 2).toFixed(1)}" y="${(toY(par) - 2).toFixed(1)}" text-anchor="end" font-size="8" fill="rgba(255,255,255,.3)">par ${par}</text>`
+          : '';
+
+        return `
+          <svg class="course-sparkline" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Scores over time">
+            ${parLine}
+            ${parLabel}
+            <path d="${pathD}" stroke="var(--gold)" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="${toX(best.date).toFixed(1)}" cy="${toY(best.score).toFixed(1)}" r="3" fill="var(--ok)" stroke="var(--gd)" stroke-width="1"/>
+            <circle cx="${toX(last.date).toFixed(1)}" cy="${toY(last.score).toFixed(1)}" r="3" fill="var(--gold)" stroke="var(--gd)" stroke-width="1"/>
+          </svg>`;
+      }
+
       // Render the per-course rounds list into an existing .rounds-log container.
       // Each entry: date · score(+toPar) · tees · differential · partners.
       // Backfilled rounds may have blank tees/rating/slope/partners — those render as "—".
@@ -3504,6 +3973,7 @@
           return;
         }
         const par = course.par;
+        const sparkline = buildCourseSparkline(rounds, par);
         const items = rounds.map(r => {
           const score = parseInt(r.score);
           let toPar = '';
@@ -3517,8 +3987,9 @@
           const partnersHtml = r.partners
             ? `<span class="round-partners" title="${r.partners}">${r.partners}</span>`
             : '';
+          // Phase 2.5+: tap a row to open the round editor.
           return `
-            <div class="round-entry">
+            <div class="round-entry" onclick="openRoundEditor('${(r.roundId || '').replace(/'/g, "\\'")}')">
               <span class="round-date">${r.playedAt || '—'}</span>
               <span class="round-score">${isNaN(score) ? '—' : score}${toPar}</span>
               <span class="round-tees">${r.teesPlayed || '—'}</span>
@@ -3528,6 +3999,7 @@
         }).join('');
         logEl.innerHTML = `
           <div class="rounds-log-title">All Rounds (${rounds.length})</div>
+          ${sparkline}
           ${items}`;
       }
 
@@ -3557,6 +4029,21 @@
         document.getElementById('sResults').style.display = 'none';
       }
 
+      // Phase 2.5+: pin the (now position:fixed) search dropdown to the input's
+      // viewport rect so it escapes the parent .card's overflow:hidden clip.
+      // Recomputed on every show plus on scroll/resize while visible.
+      function positionSearchResults() {
+        const input = document.getElementById('cSearch');
+        const res = document.getElementById('sResults');
+        if (!input || !res || res.style.display === 'none') return;
+        const r = input.getBoundingClientRect();
+        res.style.top = (r.bottom + 4) + 'px';
+        res.style.left = r.left + 'px';
+        res.style.width = r.width + 'px';
+      }
+      window.addEventListener('scroll', positionSearchResults, { passive: true, capture: true });
+      window.addEventListener('resize', positionSearchResults);
+
       function onCourseNameType() {
         const v = document.getElementById('cName').value.trim();
         const wrap = document.getElementById('newCourseWrap');
@@ -3570,9 +4057,83 @@
         document.getElementById('subBtn').textContent = chk ? 'Add Course + Log Round' : 'Log Round';
       }
 
+      // ──────────────────────────────────────────────────────────────
+      // Phase 2.5+: Sub-course config
+      // ──────────────────────────────────────────────────────────────
+      // For multi-course facilities where each tee-rated 18 is a *combination*
+      // of two 9-hole loops (Sahalee, Bobby Jones, etc), we surface a virtual
+      // entry per combo in the course search. First time a combo is logged,
+      // the upsert path creates the Rankings row on submit — same path as any
+      // brand-new course. Subsequent rounds at the same combo find the row.
+      //
+      // Pattern: parent name → array of "Loop1/Loop2" sub names. The full
+      // course name surfaced in search is `${parent} (${sub})`.
+      //
+      // Bobby Jones is tentative — Reid to confirm the actual loop names.
+      // Add new parents here as needed; no schema changes required.
+      const SUB_COURSE_CONFIG = {
+        'Sahalee Country Club': ['North/East', 'East/South', 'North/South'],
+        'Bobby Jones Golf Club': ['Magnolia/Azalea', 'Magnolia/Cherry', 'Azalea/Cherry']
+      };
+
+      // Expand a parent course into its sub-course variants. Only generates
+      // virtual entries for subs not already present as explicit Rankings rows
+      // (i.e. once Reid logs at "Sahalee (North/East)" once, the real row
+      // exists in PORTFOLIO and the virtual entry stops being synthesized).
+      function expandSubCourses(parentName) {
+        const subs = SUB_COURSE_CONFIG[parentName];
+        if (!subs) return [];
+        const parentEntry = PORTFOLIO.find(p => p.name === parentName);
+        return subs.map(sub => {
+          const fullName = `${parentName} (${sub})`;
+          const existing = PORTFOLIO.find(p => p.name === fullName);
+          if (existing) return existing; // already a real row
+          // Synthetic entry — has no rounds/ratings yet; courseId is the
+          // canonical slug so when submit hits the upsert path, this becomes
+          // the courseId of the new Rankings row.
+          return {
+            name: fullName,
+            courseId: slugify(fullName),
+            tier: parentEntry?.tier || '',
+            rank: 0, rounds: 0, record: '', pb: null,
+            mostBirdies: 0, eagles: [],
+            tees: { blue: {}, black: {}, white: {} },
+            teeNotes: '', views: '', grass: '', oki: '', private: '',
+            pace: null, notes: parentEntry?.notes || '',
+            firstPlayed: '', lastPlayed: '', avgScore: '', teesPlayed: '',
+            greens: 0, value: 0, partners: '',
+            par: parentEntry?.par || null,
+            walkability: parentEntry?.walkability || null,
+            aliases: [], subs: [],
+            _virtual: true // marker for the search UI
+          };
+        });
+      }
+
       function matchPortfolio(q) {
         const ql = q.toLowerCase();
-        return PORTFOLIO.filter(c => c.name.toLowerCase().includes(ql) || c.aliases.some(a => a.toLowerCase().includes(ql)) || c.subs.some(s => s.toLowerCase().includes(ql)));
+        const direct = PORTFOLIO.filter(c =>
+          c.name.toLowerCase().includes(ql) ||
+          c.aliases.some(a => a.toLowerCase().includes(ql)) ||
+          c.subs.some(s => s.toLowerCase().includes(ql))
+        );
+        // Sub-course expansion: any configured parent whose name matches the
+        // query contributes its virtual sub entries (minus any subs that are
+        // already real Rankings rows — those came in via the direct filter).
+        const sub = [];
+        for (const parentName in SUB_COURSE_CONFIG) {
+          if (!parentName.toLowerCase().includes(ql)) continue;
+          for (const entry of expandSubCourses(parentName)) {
+            if (!direct.find(d => d.name === entry.name) && !sub.find(s => s.name === entry.name)) {
+              sub.push(entry);
+            }
+          }
+        }
+        // Filter out the bare parent entry (e.g. "Sahalee Country Club") from
+        // direct matches if it has sub-courses configured — we want users to
+        // pick a specific combo, not the parent.
+        const filteredDirect = direct.filter(c => !SUB_COURSE_CONFIG[c.name]);
+        return [...sub, ...filteredDirect];
       }
 
       async function doSearch(q) {
@@ -3597,7 +4158,12 @@
                 res.appendChild(el);
               });
             } else {
-              const el = mkSRI(c.name, `#${c.rank} · ${c.tier}`, () => {
+              // Phase 2.5+: virtual sub-course entries (from SUB_COURSE_CONFIG)
+              // get a "new combo" tag so the user knows it's a fresh row.
+              const meta = c._virtual
+                ? 'new combo'
+                : `#${c.rank} · ${c.tier}`;
+              const el = mkSRI(c.name, meta, () => {
                 fillPortfolio(c, null);
                 hideSR();
               });
@@ -3628,6 +4194,7 @@
         }
 
         res.style.display = 'block';
+        positionSearchResults();
         setSS('', false);
 
         // Background web search
@@ -3666,6 +4233,7 @@
               });
               res.appendChild(el);
               res.style.display = 'block';
+              positionSearchResults();
             }
           } catch (e) {}
         }
